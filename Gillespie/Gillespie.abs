@@ -1,0 +1,89 @@
+module Gillespie;
+import * from ABS.StdLib;
+import * from Math;
+
+interface Substance {
+    Unit setName(String n);
+    Int getQuantity();
+    Unit increase();
+    Unit decrease();
+}
+
+interface Reaction {
+    Unit addReactant(Substance r);
+    Unit addProduct(Substance p);
+    Unit start();
+}
+
+
+class Substance(Int quantity) implements Substance { 
+    String name = "";
+    Unit setName(String n) { name = n; }
+    Int getQuantity() { return quantity; }
+    Unit increase() { quantity = quantity + 1; }
+    Unit decrease() { quantity = quantity - 1; }
+}
+
+/* Rate is 1/second
+ * Simple reaction A -> B: one reactant & one product, with rate
+ */
+class ReactionS(Rat rate) implements Reaction {
+    Substance reactant;
+    Substance prod;
+    Time currentTime = now();
+    
+    Unit addReactant(Substance r) {
+        reactant = r;
+    }
+    Unit addProduct(Substance p) {
+        prod = p;
+    }
+
+    Unit start() {
+        Fut<Int> f = reactant!getQuantity();
+        await f?;
+        Int reactantQuantity = f.get;
+        Int propensity = rate * reactantQuantity;
+        Rat timeIncrement = 0;
+        
+        while (reactantQuantity > 0) {
+            timeIncrement = -log(random(1)/propensity);
+            await reactant!decrease();
+            await prod!increase();
+            duration(timeIncrement, timeIncrement);
+        }
+    }
+}
+
+/* 
+ * TODO complex reaction: 
+ *      set of reactants -> set of products
+ *
+ */
+class Reaction(Int rate) implements Reaction {
+    Set<Substance> reactants = EmptySet;
+    Set<Substance> products = EmptySet;
+     
+    Unit addReactant(Substance r) {
+        reactants = insertElement(reactants, r);
+    }
+    Unit addProduct(Substance p) {
+        products = insertElement(products, p);
+    }
+    Unit start() {}
+
+}
+
+{
+    Substance a = new local Substance(100);
+    Substance b = new local Substance(0);
+
+    Reaction ab = new ReactionS(50);
+
+    await ab!addReactant(a);
+    await ab!addProduct(b);
+    
+    await ab!start();
+    
+    
+}
