@@ -1,89 +1,106 @@
 module Gillespie;
+export *;
 import * from ABS.StdLib;
 import * from Math;
 
 interface Substance {
-    Unit setName(String n);
-    Int getQuantity();
-    Unit increase();
-    Unit decrease();
+    String getName();
 }
 
 interface Reaction {
-    Unit addReactant(Substance r);
-    Unit addProduct(Substance p);
+    Unit addReactant(Substance r, Int n);
+    Unit addProduct(Substance p, Int n);
     Unit start();
 }
 
-
-class Substance(Int quantity) implements Substance { 
-    String name = "";
-    Unit setName(String n) { name = n; }
-    Int getQuantity() { return quantity; }
-    Unit increase() { quantity = quantity + 1; }
-    Unit decrease() { quantity = quantity - 1; }
+class Substance(String name) implements Substance { 
+    String getName() { return name; }
 }
 
-/* Rate is 1/second
- * Simple reaction A -> B: one reactant & one product, with rate
+
+/* 
+ * Reaction: 
+ *      multiset of reactants -> multiset of products
+ *      
  */
-class ReactionS(Rat rate) implements Reaction {
-    Substance reactant;
-    Substance prod;
-    Time currentTime = now();
-    
-    Unit addReactant(Substance r) {
-        reactant = r;
+class Reaction(Int rate) implements Reaction {
+    Set<Pair<Substance, Int>> reactants = EmptySet;
+    Set<Pair<Substance, Int>> products = EmptySet;
+     
+    Unit addReactant(Substance r, Int n) {
+        reactants = insertElement(reactants, Pair(r, n));
     }
-    Unit addProduct(Substance p) {
-        prod = p;
+    Unit addProduct(Substance p, Int n) {
+        products = insertElement(products, Pair(p, n));
+    }
+    Unit start() {
+        
     }
 
-    Unit start() {
-        Fut<Int> f = reactant!getQuantity();
-        await f?;
-        Int reactantQuantity = f.get;
-        Int propensity = rate * reactantQuantity;
-        Rat timeIncrement = 0;
-        
-        while (reactantQuantity > 0) {
-            timeIncrement = -log(random(1)/propensity);
-            await reactant!decrease();
-            await prod!increase();
-            duration(timeIncrement, timeIncrement);
+}
+
+/* This is the environment 
+ * - it contains some substances
+ * - that react with each other according to the defined reactions
+ *
+ */
+interface Substrate {
+    Bool consumeSubstances(Map<Substance, Int> consumption);
+    Unit produceSubstances(Map<Substance, Int> production);
+    Unit run();
+}
+
+class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) implements Substrate {
+    
+    Unit run() {
+    
+    }
+    
+    Bool consumeSubstances(Map<Substance, Int> consumption) {
+        Bool success = False;
+        Set<Substance> availableSubstances = keys(substances);
+	    Set<Substance> requiredSubstances = keys(consumption);
+
+        // Test if every required substance exists in the required quantity
+	    Bool continue = True;
+	    while (hasNext(requiredSubstances) && continue) {
+	        Substance s = take(requiredSubstances);
+	        Int q = lookupUnsafe(consumption, s);
+	        
+	        if (contains(availableSubstances, s)) {
+	            Int availableQuantity = lookupUnsafe(substances, s);
+	            if (q > availableQuantity) {
+	                continue = False;
+	            }
+	        } else {
+                continue = False;
+	        }
+	    }
+	    
+	    if (continue) {
+		    // Consume the substances
+		    Set<Substance> consumedSubstances = keys(consumption);
+		    while (hasNext(consumedSubstances)) {
+		        Substance s = take(consumedSubstances);
+		        Int q = lookupUnsafe(consumption, s);
+		        Int availableQuantity = lookupUnsafe(substances, s);
+		        put(substances, s, availableQuantity - q);
+		    }
+		    success = True;
+		} else {
+		    success = False;
+		}
+		return success;
+    }
+
+    Unit produceSubstances(Map<Substance, Int> production) {
+        Set<Substance> producedSubstances = keys(production);
+        while (hasNext(keys(production))) {
+            Substance s = take(producedSubstances);
+            Int q = lookupUnsafe(production, s);
+            substances = insert(substances, Pair(s, q));
         }
     }
 }
 
-/* 
- * TODO complex reaction: 
- *      set of reactants -> set of products
- *
- */
-class Reaction(Int rate) implements Reaction {
-    Set<Substance> reactants = EmptySet;
-    Set<Substance> products = EmptySet;
-     
-    Unit addReactant(Substance r) {
-        reactants = insertElement(reactants, r);
-    }
-    Unit addProduct(Substance p) {
-        products = insertElement(products, p);
-    }
-    Unit start() {}
 
-}
-
-{
-    Substance a = new local Substance(100);
-    Substance b = new local Substance(0);
-
-    Reaction ab = new ReactionS(50);
-
-    await ab!addReactant(a);
-    await ab!addProduct(b);
-    
-    await ab!start();
-    
-    
-}
