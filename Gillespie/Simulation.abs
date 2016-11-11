@@ -15,13 +15,13 @@ import * from Gillespie;
     
     
     // A + 2B -> C
-    Reaction r1 = new Reaction(1);
+    Reaction r1 = new Reaction();
     r1.addReactant(a, 1);
     r1.addReactant(b, 2);
     r1.addProduct(c, 1);
 
     // A + C -> 2B
-    Reaction r2 = new Reaction(1);
+    Reaction r2 = new Reaction();
     r2.addReactant(a, 1);
     r2.addReactant(c, 1);
     r2.addProduct(b, 2);
@@ -29,5 +29,5 @@ import * from Gillespie;
     reactions = insertElement(reactions, r1);
     reactions = insertElement(reactions, r2);
     
-    Substrate env = new local Substrate(substances, reactions);
+    [HTTPName: "env"] Substrate env = new local Substrate(substances, reactions);
 }

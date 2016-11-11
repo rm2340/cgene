@@ -10,7 +10,7 @@ interface Substance {
 interface Reaction {
     Unit addReactant(Substance r, Int n);
     Unit addProduct(Substance p, Int n);
-    Unit start();
+    Unit start(Substrate env);
 }
 
 class Substance(String name) implements Substance { 
@@ -21,20 +21,25 @@ class Substance(String name) implements Substance {
 /* 
  * Reaction: 
  *      multiset of reactants -> multiset of products
- *      
+ *      A reaction gets its reactants from and releases its products into the environment
  */
-class Reaction(Int rate) implements Reaction {
-    Set<Pair<Substance, Int>> reactants = EmptySet;
-    Set<Pair<Substance, Int>> products = EmptySet;
+class Reaction() implements Reaction {
+    Map<Substance, Int> reactants = EmptyMap;
+    Map<Substance, Int> products = EmptyMap;
      
     Unit addReactant(Substance r, Int n) {
-        reactants = insertElement(reactants, Pair(r, n));
+        reactants = insert(reactants, Pair(r, n));
     }
     Unit addProduct(Substance p, Int n) {
-        products = insertElement(products, Pair(p, n));
+        products = insert(products, Pair(p, n));
     }
-    Unit start() {
-        
+    Unit start(Substrate env) {
+        while(True) {
+            Bool can = await env!consumeSubstances(reactants);
+            if (can) {
+                await env!produceSubstances(products);
+            }
+        }
     }
 
 }
@@ -53,7 +58,11 @@ interface Substrate {
 class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) implements Substrate {
     
     Unit run() {
-    
+        // start all reactions
+        while (hasNext(reactions)) {
+            Reaction r = take(reactions);
+            r!start(this);
+        }
     }
     
     Bool consumeSubstances(Map<Substance, Int> consumption) {
@@ -65,6 +74,7 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
 	    Bool continue = True;
 	    while (hasNext(requiredSubstances) && continue) {
 	        Substance s = take(requiredSubstances);
+	        requiredSubstances = remove(requiredSubstances, s);
 	        Int q = lookupUnsafe(consumption, s);
 	        
 	        if (contains(availableSubstances, s)) {
@@ -82,6 +92,7 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
 		    Set<Substance> consumedSubstances = keys(consumption);
 		    while (hasNext(consumedSubstances)) {
 		        Substance s = take(consumedSubstances);
+		        consumedSubstances = remove(consumedSubstances, s);
 		        Int q = lookupUnsafe(consumption, s);
 		        Int availableQuantity = lookupUnsafe(substances, s);
 		        put(substances, s, availableQuantity - q);
