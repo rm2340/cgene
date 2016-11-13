@@ -1,52 +1,15 @@
 module Gillespie;
 export *;
 import * from ABS.StdLib;
+import * from Reaction;
 import * from Math;
 
-interface Substance {
-    String getName();
-}
-
-interface Reaction {
-    Unit addReactant(Substance r, Int n);
-    Unit addProduct(Substance p, Int n);
-    Unit start(Substrate env);
-}
-
-class Substance(String name) implements Substance { 
-    String getName() { return name; }
-}
-
-
-/* 
- * Reaction: 
- *      multiset of reactants -> multiset of products
- *      A reaction gets its reactants from and releases its products into the environment
- */
-class Reaction() implements Reaction {
-    Map<Substance, Int> reactants = EmptyMap;
-    Map<Substance, Int> products = EmptyMap;
-     
-    Unit addReactant(Substance r, Int n) {
-        reactants = insert(reactants, Pair(r, n));
-    }
-    Unit addProduct(Substance p, Int n) {
-        products = insert(products, Pair(p, n));
-    }
-    Unit start(Substrate env) {
-        while(True) {
-            Bool can = await env!consumeSubstances(reactants);
-            if (can) {
-                await env!produceSubstances(products);
-            }
-        }
-    }
-
-}
+// A Substance
+data Substance = Substance(String name);
 
 /* This is the environment 
- * - it contains some substances
- * - that react with each other according to the defined reactions
+ * - it contains substances
+ * - that react with each other according to the given reactions
  *
  */
 interface Substrate {
@@ -61,6 +24,7 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
         // start all reactions
         while (hasNext(reactions)) {
             Reaction r = take(reactions);
+            reactions = remove(reactions, r);
             r!start(this);
         }
     }
@@ -95,7 +59,10 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
 		        consumedSubstances = remove(consumedSubstances, s);
 		        Int q = lookupUnsafe(consumption, s);
 		        Int availableQuantity = lookupUnsafe(substances, s);
-		        put(substances, s, availableQuantity - q);
+		        substances = put(substances, s, availableQuantity - q);
+		        
+                availableQuantity = lookupUnsafe(substances, s);
+		        println(toString(s) + " " + toString(availableQuantity));
 		    }
 		    success = True;
 		} else {
@@ -106,10 +73,15 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
 
     Unit produceSubstances(Map<Substance, Int> production) {
         Set<Substance> producedSubstances = keys(production);
-        while (hasNext(keys(production))) {
+        while (hasNext(producedSubstances)) {
             Substance s = take(producedSubstances);
+            producedSubstances = remove(producedSubstances, s);
             Int q = lookupUnsafe(production, s);
-            substances = insert(substances, Pair(s, q));
+            Int availableQuantity = lookupUnsafe(substances, s);
+            substances = put(substances, s, availableQuantity + q);
+	        
+            availableQuantity = lookupUnsafe(substances, s);
+	        println(toString(s) + " " + toString(availableQuantity));
         }
     }
 }

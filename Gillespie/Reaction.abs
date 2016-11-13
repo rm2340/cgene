@@ -1,0 +1,40 @@
+module Reaction;
+export *;
+import * from Gillespie;
+
+
+interface Reaction {
+    Unit addReactant(Substance r, Int n);
+    Unit addProduct(Substance p, Int n);
+    Unit start(Substrate env);
+}
+
+/* 
+ * Reaction: 
+ *      multiset of reactants -> multiset of products
+ *      A reaction gets its reactants from and releases its products into the environment (Substrate)
+ */
+class Reaction() implements Reaction {
+    Map<Substance, Int> reactants = EmptyMap;
+    Map<Substance, Int> products = EmptyMap;
+     
+    Unit addReactant(Substance r, Int n) {
+        reactants = insert(reactants, Pair(r, n));
+    }
+    Unit addProduct(Substance p, Int n) {
+        products = insert(products, Pair(p, n));
+    }
+    
+    Unit start(Substrate env) {
+        println("start reaction");
+        Bool can = False;
+        while(True) {
+            can = await env!consumeSubstances(reactants);
+            if (can) {
+                await env!produceSubstances(products);
+            }
+        }
+    }
+
+}
+

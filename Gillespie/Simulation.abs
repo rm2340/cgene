@@ -1,30 +1,35 @@
 module Simulation;
 import * from Gillespie;
+import * from Reaction;
 
 {
     Map<Substance, Int> substances = EmptyMap;
     Set<Reaction> reactions = EmptySet;
 
-    Substance a = new local Substance("A");
-    Substance b = new local Substance("B");
-    Substance c = new local Substance("C");
+    Substance a = Substance("A");
+    Substance b = Substance("B");
+    Substance c = Substance("C");
+    Substance d = Substance("D");
+    
     
     substances = insert(substances, Pair(a, 100));
-    substances = insert(substances, Pair(b, 200));
+    substances = insert(substances, Pair(b, 100));
     substances = insert(substances, Pair(c, 0));
+    substances = insert(substances, Pair(d, 0));
     
     
-    // A + 2B -> C
+    // A + B -> C + D
     Reaction r1 = new Reaction();
     r1.addReactant(a, 1);
-    r1.addReactant(b, 2);
+    r1.addReactant(b, 1);
     r1.addProduct(c, 1);
+    r1.addProduct(d, 1);
 
-    // A + C -> 2B
+    // A + C -> 2D
     Reaction r2 = new Reaction();
     r2.addReactant(a, 1);
     r2.addReactant(c, 1);
-    r2.addProduct(b, 2);
+    r2.addProduct(d, 2);
 
     reactions = insertElement(reactions, r1);
     reactions = insertElement(reactions, r2);
