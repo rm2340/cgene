@@ -26,6 +26,8 @@ class Reaction() implements Reaction {
     }
     
     Unit start(Substrate env) {
+        await env!testSubstances(keys(reactants));
+        
         println("start reaction");
         Bool can = False;
         while(True) {
@@ -33,6 +35,12 @@ class Reaction() implements Reaction {
             if (can) {
                 await env!produceSubstances(products);
             }
+            Int rate = await env!reactionRate(reactants);
+            println("rate: " + toString(rate));
+            
+            // FIXME: What if rate=0 ?
+            duration(1/rate, 1/rate);
+//            println(toString(now()));
         }
     }
 

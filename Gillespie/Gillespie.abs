@@ -13,8 +13,10 @@ data Substance = Substance(String name);
  *
  */
 interface Substrate {
+    Bool testSubstances(Set<Substance> reactants);
     Bool consumeSubstances(Map<Substance, Int> consumption);
     Unit produceSubstances(Map<Substance, Int> production);
+    Int reactionRate(Map<Substance, Int> consumption);
     Unit run();
 }
 
@@ -29,6 +31,29 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
         }
     }
     
+    /*
+     * Sanity check: do all reactants exist in the substrate? (they should)
+     * TODO: raise exception if not
+     */
+    Bool testSubstances(Set<Substance> reactants) {
+        Bool success = True;
+        Set<Substance> availableSubstances = keys(substances);
+
+        // Test if every reactant exists
+        Bool continue = True;
+        while (hasNext(reactants) && continue) {
+            Substance s = take(reactants);
+            reactants = remove(reactants, s);
+            if (! contains(availableSubstances, s)) {
+                continue = False;
+                success = False;
+            }
+        }
+        return success;
+    }
+    
+    /* Returns True if reactants exist in sufficient qunatity for the reaction to occur
+     */
     Bool consumeSubstances(Map<Substance, Int> consumption) {
         Bool success = False;
         Set<Substance> availableSubstances = keys(substances);
@@ -40,15 +65,12 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
 	        Substance s = take(requiredSubstances);
 	        requiredSubstances = remove(requiredSubstances, s);
 	        Int q = lookupUnsafe(consumption, s);
-	        
-	        if (contains(availableSubstances, s)) {
-	            Int availableQuantity = lookupUnsafe(substances, s);
-	            if (q > availableQuantity) {
-	                continue = False;
-	            }
-	        } else {
+            Int availableQuantity = lookupUnsafe(substances, s);
+            Rat ratio = q / availableQuantity;
+            println(toString(ratio));
+            if (q > availableQuantity) {
                 continue = False;
-	        }
+            }
 	    }
 	    
 	    if (continue) {
@@ -83,6 +105,27 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
             availableQuantity = lookupUnsafe(substances, s);
 	        println(toString(s) + " " + toString(availableQuantity));
         }
+    }
+    
+    /* Return the reaction rate as a function of the quantity of currently 
+     * available molecules of all reactants.
+     * Zero if at least one reactant has zero molecules.
+     *
+     * TODO: Consider the quantity of required molecules (consumption)?
+     */
+    Int reactionRate(Map<Substance, Int> consumption) {
+        Set<Substance> availableSubstances = keys(substances);
+        Set<Substance> requiredSubstances = keys(consumption);
+        
+        Int reactionRate = 1;   
+        Bool continue = True;
+        while (hasNext(requiredSubstances) && continue) {
+            Substance s = take(requiredSubstances);
+            requiredSubstances = remove(requiredSubstances, s);
+            Int availableQuantity = lookupUnsafe(substances, s);
+            reactionRate = reactionRate * availableQuantity;
+        }
+        return reactionRate;
     }
 }
 

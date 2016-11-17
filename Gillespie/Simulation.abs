@@ -1,6 +1,7 @@
 module Simulation;
 import * from Gillespie;
 import * from Reaction;
+import * from ABS.DC;
 
 {
     Map<Substance, Int> substances = EmptyMap;
@@ -34,5 +35,8 @@ import * from Reaction;
     reactions = insertElement(reactions, r1);
     reactions = insertElement(reactions, r2);
     
+//    DeploymentComponent cell = new DeploymentComponent("Cell 1", map[Pair(Energy, 10)]);
+//    [HTTPName: "env"][DC: cell] Substrate env = new local Substrate(substances, reactions);
+
     [HTTPName: "env"] Substrate env = new local Substrate(substances, reactions);
 }
