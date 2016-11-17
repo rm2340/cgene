@@ -38,8 +38,14 @@ class Reaction() implements Reaction {
             Int rate = await env!reactionRate(reactants);
             println("rate: " + toString(rate));
             
-            // FIXME: What if rate=0 ?
+            // Wait for a duration inverse to the reaction rate
+            // If the rate is 0 (meaning that some reactant is not available), wait for the longest possible time
+            if (rate == 0) {
+                rate = 1;
+            }
             duration(1/rate, 1/rate);
+            
+            
 //            println(toString(now()));
         }
     }
