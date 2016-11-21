@@ -67,7 +67,6 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
 	        Int q = lookupUnsafe(consumption, s);
             Int availableQuantity = lookupUnsafe(substances, s);
             Rat ratio = q / availableQuantity;
-            println(toString(ratio));
             if (q > availableQuantity) {
                 continue = False;
             }
@@ -82,9 +81,6 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
 		        Int q = lookupUnsafe(consumption, s);
 		        Int availableQuantity = lookupUnsafe(substances, s);
 		        substances = put(substances, s, availableQuantity - q);
-		        
-                availableQuantity = lookupUnsafe(substances, s);
-		        println(toString(s) + " " + toString(availableQuantity));
 		    }
 		    success = True;
 		} else {
@@ -103,8 +99,8 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
             substances = put(substances, s, availableQuantity + q);
 	        
             availableQuantity = lookupUnsafe(substances, s);
-	        println(toString(s) + " " + toString(availableQuantity));
         }
+        this.logg();
     }
     
     /* Return the reaction rate as a function of the quantity of currently 
@@ -126,6 +122,19 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
             reactionRate = reactionRate * availableQuantity;
         }
         return reactionRate;
+    }
+    
+    // logging/plotting output
+    Unit logg() {
+        Set<Substance> availableSubstances = keys(substances);
+        print(toString(timeValue(now())));
+        while (hasNext(availableSubstances)) {
+            Substance s = take(availableSubstances);
+            availableSubstances = remove(availableSubstances, s);
+            //print("    " + name(s) + "  " + toString(lookupUnsafe(substances, s)));
+            print("    " + toString(lookupUnsafe(substances, s)));
+        }
+        println("");
     }
 }
 

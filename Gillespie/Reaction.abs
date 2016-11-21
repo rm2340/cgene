@@ -28,15 +28,13 @@ class Reaction() implements Reaction {
     Unit start(Substrate env) {
         await env!testSubstances(keys(reactants));
         
-        println("start reaction");
-        Bool can = False;
         while(True) {
-            can = await env!consumeSubstances(reactants);
+            Bool can = await env!consumeSubstances(reactants);
             if (can) {
                 await env!produceSubstances(products);
             }
             Int rate = await env!reactionRate(reactants);
-            println("rate: " + toString(rate));
+            //println("rate: " + toString(rate));
             
             // Wait for a duration inverse to the reaction rate
             // If the rate is 0 (meaning that some reactant is not available), wait for the longest possible time

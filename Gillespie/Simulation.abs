@@ -7,33 +7,40 @@ import * from ABS.DC;
     Map<Substance, Int> substances = EmptyMap;
     Set<Reaction> reactions = EmptySet;
 
-    Substance a = Substance("A");
-    Substance b = Substance("B");
-    Substance c = Substance("C");
-    Substance d = Substance("D");
+    Substance tf = Substance("TF");
+    Substance p = Substance("P");
+    Substance ps = Substance("P*");
+    Substance rna = Substance("RNA");
+    Substance mrna = Substance("mRNA");
+    Substance prot = Substance("Prot");
     
     
-    substances = insert(substances, Pair(a, 100));
-    substances = insert(substances, Pair(b, 100));
-    substances = insert(substances, Pair(c, 0));
-    substances = insert(substances, Pair(d, 0));
+    substances = insert(substances, Pair(mrna, 100));
+    substances = insert(substances, Pair(prot, 0));
     
     
-    // A + B -> C + D
+    // mRNA -> 0
     Reaction r1 = new Reaction();
-    r1.addReactant(a, 1);
-    r1.addReactant(b, 1);
-    r1.addProduct(c, 1);
-    r1.addProduct(d, 1);
+    r1.addReactant(mrna, 1);
 
-    // A + C -> 2D
+    // 0 -> mRNA
     Reaction r2 = new Reaction();
-    r2.addReactant(a, 1);
-    r2.addReactant(c, 1);
-    r2.addProduct(d, 2);
+    r2.addProduct(mrna, 1);
+
+    // mRNA -> mRNA + Prot
+    Reaction r3 = new Reaction();
+    r3.addReactant(mrna, 1);
+    r3.addProduct(mrna, 1);
+    r3.addProduct(prot, 1);
+
+    // Prot -> 0
+    Reaction r4 = new Reaction();
+    r4.addReactant(prot, 1);
 
     reactions = insertElement(reactions, r1);
     reactions = insertElement(reactions, r2);
+    reactions = insertElement(reactions, r3);
+    reactions = insertElement(reactions, r4);
     
 //    DeploymentComponent cell = new DeploymentComponent("Cell 1", map[Pair(Energy, 10)]);
 //    [HTTPName: "env"][DC: cell] Substrate env = new local Substrate(substances, reactions);
