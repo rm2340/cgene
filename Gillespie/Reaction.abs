@@ -7,14 +7,18 @@ interface Reaction {
     Unit addReactant(Substance r, Int n);
     Unit addProduct(Substance p, Int n);
     Unit start(Substrate env);
+    Unit setRateFactor(Rat f);
+    String toString();
 }
 
 /* 
  * Reaction: 
  *      multiset of reactants -> multiset of products
  *      A reaction gets its reactants from and releases its products into the environment (Substrate)
+ *      The rateFactor (default: 1) can be used to adjust the reaction speed
  */
 class Reaction() implements Reaction {
+    Rat rateFactor = 1;
     Map<Substance, Int> reactants = EmptyMap;
     Map<Substance, Int> products = EmptyMap;
      
@@ -23,6 +27,9 @@ class Reaction() implements Reaction {
     }
     Unit addProduct(Substance p, Int n) {
         products = insert(products, Pair(p, n));
+    }
+    Unit setRateFactor(Rat f) {
+        rateFactor = f;
     }
     
     Unit start(Substrate env) {
@@ -34,19 +41,50 @@ class Reaction() implements Reaction {
                 await env!produceSubstances(products);
             }
             Int rate = await env!reactionRate(reactants);
-            //println("rate: " + toString(rate));
             
-            // Wait for a duration inverse to the reaction rate
-            // If the rate is 0 (meaning that some reactant is not available), wait for the longest possible time
-            if (rate == 0) {
-                rate = 1;
+            String name = this.toString();
+            await env!logRate(name, rate);
+
+            if (rate != 0) {
+                // If the rate is 0 (meaning that some reactant is not available), don't wait
+                // Wait for a duration inverse to the reaction rate
+                Rat wait = 1 / (rate * rateFactor);
+                duration(wait, wait);
             }
-            duration(1/rate, 1/rate);
-            
-            
-//            println(toString(now()));
         }
     }
-
+    
+    String toString() {
+        String res = "";
+        Set<Substance> subst = keys(reactants);
+        
+        String plus = "";
+        while (hasNext(subst)) {
+            Substance s = take(subst);
+            subst = remove(subst, s);
+            Int q = lookupUnsafe(reactants, s);
+            if (q > 1) {
+                res = res + toString(q);
+            }
+            res = res + plus;
+            res = res + name(s);
+            plus = "+";
+        }
+        res = res + "->";
+        subst = keys(products);
+        plus = "";
+        while (hasNext(subst)) {
+            Substance s = take(subst);
+            subst = remove(subst, s);
+            Int q = lookupUnsafe(products, s);
+            if (q > 1) {
+                res = res + toString(q);
+            }
+            res = res + plus;
+            res = res + name(s);
+            plus = "+";
+        }
+        return res;
+    }
 }
 

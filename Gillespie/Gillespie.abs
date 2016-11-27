@@ -18,11 +18,13 @@ interface Substrate {
     Unit produceSubstances(Map<Substance, Int> production);
     Int reactionRate(Map<Substance, Int> consumption);
     Unit run();
+    Unit logRate(String desc, Int rate);
 }
 
 class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) implements Substrate {
     
     Unit run() {
+        this.logInit();
         // start all reactions
         while (hasNext(reactions)) {
             Reaction r = take(reactions);
@@ -97,8 +99,6 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
             Int q = lookupUnsafe(production, s);
             Int availableQuantity = lookupUnsafe(substances, s);
             substances = put(substances, s, availableQuantity + q);
-	        
-            availableQuantity = lookupUnsafe(substances, s);
         }
         this.logg();
     }
@@ -114,8 +114,7 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
         Set<Substance> requiredSubstances = keys(consumption);
         
         Int reactionRate = 1;   
-        Bool continue = True;
-        while (hasNext(requiredSubstances) && continue) {
+        while (hasNext(requiredSubstances)) {
             Substance s = take(requiredSubstances);
             requiredSubstances = remove(requiredSubstances, s);
             Int availableQuantity = lookupUnsafe(substances, s);
@@ -124,17 +123,39 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
         return reactionRate;
     }
     
+    
+    
+    
+    
+    
+    
     // logging/plotting output
-    Unit logg() {
+    Unit logInit() {
         Set<Substance> availableSubstances = keys(substances);
-        print(toString(timeValue(now())));
+        print("num den");
         while (hasNext(availableSubstances)) {
             Substance s = take(availableSubstances);
             availableSubstances = remove(availableSubstances, s);
-            //print("    " + name(s) + "  " + toString(lookupUnsafe(substances, s)));
+            print("    " + name(s));
+        }
+        println("");
+    }
+    
+    Unit logg() {
+        Set<Substance> availableSubstances = keys(substances);
+        print(toString(numerator(timeValue(now()))) + " " + toString(denominator(timeValue(now()))));
+        while (hasNext(availableSubstances)) {
+            Substance s = take(availableSubstances);
+            availableSubstances = remove(availableSubstances, s);
             print("    " + toString(lookupUnsafe(substances, s)));
         }
         println("");
+    }
+    
+    Unit logRate(String desc, Int rate) {
+        print(toString(numerator(timeValue(now()))) + " " + toString(denominator(timeValue(now()))));
+        print("   " + desc);    
+        println("   " + toString(rate));    
     }
 }
 
