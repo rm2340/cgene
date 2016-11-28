@@ -18,7 +18,7 @@ interface Substrate {
     Unit produceSubstances(Map<Substance, Int> production);
     Int reactionRate(Map<Substance, Int> consumption);
     Unit run();
-    Unit logRate(String desc, Int rate);
+    Unit logRate(String desc, Rat rate);
 }
 
 class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) implements Substrate {
@@ -26,9 +26,17 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
     Unit run() {
         this.logInit();
         // start all reactions
+        Int n = 1;
         while (hasNext(reactions)) {
             Reaction r = take(reactions);
             reactions = remove(reactions, r);
+            
+            String name = await r!toString();
+            String id = "reaction" + toString(n);
+            await r!setID(id);
+            println(id + " " + name);
+            n = n + 1;
+
             r!start(this);
         }
     }
@@ -129,7 +137,9 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
     
     
     
-    // logging/plotting output
+    /*
+     * Logging/plotting output
+     */
     Unit logInit() {
         Set<Substance> availableSubstances = keys(substances);
         print("num den");
@@ -152,10 +162,10 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
         println("");
     }
     
-    Unit logRate(String desc, Int rate) {
+    Unit logRate(String id, Rat rate) {
         print(toString(numerator(timeValue(now()))) + " " + toString(denominator(timeValue(now()))));
-        print("   " + desc);    
-        println("   " + toString(rate));    
+        print("   " + id);
+        println("   " + toString(numerator(rate)) + " " + toString(denominator(rate)));    
     }
 }
 

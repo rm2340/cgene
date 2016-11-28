@@ -8,6 +8,7 @@ interface Reaction {
     Unit addProduct(Substance p, Int n);
     Unit start(Substrate env);
     Unit setRateFactor(Rat f);
+    Unit setID(String s);
     String toString();
 }
 
@@ -18,6 +19,7 @@ interface Reaction {
  *      The rateFactor (default: 1) can be used to adjust the reaction speed
  */
 class Reaction() implements Reaction {
+    String id = "SetMe";
     Rat rateFactor = 1;
     Map<Substance, Int> reactants = EmptyMap;
     Map<Substance, Int> products = EmptyMap;
@@ -33,25 +35,32 @@ class Reaction() implements Reaction {
     }
     
     Unit start(Substrate env) {
-        await env!testSubstances(keys(reactants));
+        Bool ok = await env!testSubstances(keys(reactants));
+        assert ok;
         
         while(True) {
-            Bool can = await env!consumeSubstances(reactants);
-            if (can) {
-                await env!produceSubstances(products);
-            }
-            Int rate = await env!reactionRate(reactants);
-            
-            String name = this.toString();
-            await env!logRate(name, rate);
+            Int envRate = await env!reactionRate(reactants);
+            if (envRate != 0) {
+	            Bool can = await env!consumeSubstances(reactants);
+	            if (can) {
+	                //produce
+	                await env!produceSubstances(products);
+                    
+	                // Wait for a duration inverse to the reaction rate
+	                Rat rate = envRate * rateFactor;
+	                duration(1/rate, 1/rate);
 
-            if (rate != 0) {
-                // If the rate is 0 (meaning that some reactant is not available), don't wait
-                // Wait for a duration inverse to the reaction rate
-                Rat wait = 1 / (rate * rateFactor);
-                duration(wait, wait);
+                    // log
+                    String name = this.toString();
+                    await env!logRate(id, rate);
+                }
             }
         }
+    }
+    
+    
+    Unit setID(String s) {
+        this.id = s;
     }
     
     String toString() {
