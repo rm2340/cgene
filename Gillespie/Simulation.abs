@@ -14,38 +14,62 @@ import * from ABS.DC;
     Substance mrna = Substance("mRNA");
     Substance prot = Substance("Protein");
     
+    Substance a = Substance("A");
+    Substance b = Substance("B");
     
-    substances = insert(substances, Pair(mrna, 300));
-    substances = insert(substances, Pair(prot, 20));
+    
+//    substances = insert(substances, Pair(mrna, 10));
+//    substances = insert(substances, Pair(prot, 0));
+    // ******************** TEST ************************
+    substances = insert(substances, Pair(a, 0));
+//    substances = insert(substances, Pair(b, 0));
+    // ******************** TEST ************************
     
     
     // mRNA -> 0
     Reaction r1 = new Reaction();
     r1.addReactant(mrna, 1);
-    r1.setRateFactor(1/3);
+    r1.setRate(1/3);
 
     // 0 -> mRNA
     Reaction r2 = new Reaction();
     r2.addProduct(mrna, 1);
-    r2.setRateFactor(5);
+    r2.setRate(5);
 
     // mRNA -> mRNA + Prot
     Reaction r3 = new Reaction();
     r3.addReactant(mrna, 1);
     r3.addProduct(mrna, 1);
     r3.addProduct(prot, 1);
+    r3.setEnergyConsumption(100);
 
     // Prot -> 0
     Reaction r4 = new Reaction();
     r4.addReactant(prot, 1);
 
-    reactions = insertElement(reactions, r1);
-    reactions = insertElement(reactions, r2);
-    reactions = insertElement(reactions, r3);
-    reactions = insertElement(reactions, r4);
-    
-//    DeploymentComponent cell = new DeploymentComponent("Cell 1", map[Pair(Energy, 10)]);
-//    [HTTPName: "env"][DC: cell] Substrate env = new local Substrate(substances, reactions);
+    // ******************** TEST ************************
+    // a -> 0
+    Reaction r5 = new Reaction();
+    r5.addReactant(a, 1);
+    r5.setRate(1/2);
+    // 0 -> a
+    Reaction r6 = new Reaction();
+    r6.addProduct(a, 1);
+    r6.setRate(1);
+    // ******************** TEST ************************
 
-    [HTTPName: "env"] Substrate env = new local Substrate(substances, reactions);
+
+//    reactions = insertElement(reactions, r1);
+//    reactions = insertElement(reactions, r2);
+//    reactions = insertElement(reactions, r3);
+//    reactions = insertElement(reactions, r4);
+    reactions = insertElement(reactions, r5);
+    reactions = insertElement(reactions, r6);
+
+
+    
+    // We use the Speed resource to model energy
+    DeploymentComponent cell = new DeploymentComponent("Cell", map[Pair(Speed, 10)]);
+    [HTTPName: "env"][DC: cell] Substrate env = new Substrate(substances, reactions);
+
 }

@@ -1,0 +1,72 @@
+delta DFineGrained;
+
+modifies class Reaction.Reaction {
+    modifies Unit loop(Substrate env) {
+	    while(True) {
+            // FIXME: Type checker error when using shortcut:
+	        //Pair<Bool,Rat> waitOccur = await env!step(this, rate, reactants);
+	        Fut<Pair<Bool,Rat>> f = env!step(this, rate, reactants);
+	        await f?;
+	        Pair<Bool,Rat> waitOccur = f.get;
+	        if(fst(waitOccur)) {
+	            Bool can = await env!consumeSubstances(reactants);
+	            if (can) {
+	                await env!produceSubstances(products);
+	            }
+	        }
+	        Rat t = snd(waitOccur);
+	        duration(t, t);
+	        // log
+	        String name = this.toString();
+	        await env!logRate(id, t);
+	    }
+    }
+}
+
+modifies interface Gillespie.Substrate {
+    adds Pair<Bool,Rat> step(Reaction reaction, Rat reactionRate, Map<Substance, Int> consumption);
+}
+
+modifies class Gillespie.Substrate {
+    /*
+     *
+     */
+    adds Pair<Bool,Rat> step(Reaction reaction, Rat reactionRate, Map<Substance, Int> consumption) {
+        String s = await reaction!toString(); 
+        println("****************************"); print(toString(now())); println(" :step: " + s);
+        
+        Int factor = this.reactionFactor(consumption);
+        Rat rate = reactionRate * factor;
+        assert rate > 0;
+        
+        // occurence interval
+        Rat interval = 1/rate;
+        println("interval: " + toString(interval));
+
+        // time since last occurence
+        Rat time_passed = lookupDefault(reactionRates, reaction, 0);
+        println("time_passed: " + toString(time_passed));
+        
+        // minimal interval among all reactions
+        Rat interval_min = interval;
+        Set<Reaction> reactions = keys(reactionRates);
+        while(hasNext(reactions)) {
+            Reaction re = take(reactions);
+            reactions = remove(reactions, re);
+            Rat i = lookupUnsafe(reactionRates, re);
+            interval_min = min(i, interval_min);
+        }
+
+        Bool occur = False;
+        if(interval <= time_passed) {
+            occur = True;
+            reactionRates = put(reactionRates, reaction, interval_min);
+        } else {
+            reactionRates = put(reactionRates, reaction, time_passed + interval_min);
+        }
+        println("occur: " + toString(occur));
+        println("wait: " + toString(interval_min));
+        return Pair(occur, interval_min);
+    }
+    
+}

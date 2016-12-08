@@ -1,26 +1,29 @@
 module Reaction;
-export *;
+export Reaction;
 import * from Gillespie;
-
 
 interface Reaction {
     Unit addReactant(Substance r, Int n);
     Unit addProduct(Substance p, Int n);
     Unit start(Substrate env);
-    Unit setRateFactor(Rat f);
+    Unit setRate(Rat f);
+    Rat getRate();
+    Unit setEnergyConsumption(Int i);
     Unit setID(String s);
     String toString();
 }
 
 /* 
- * Reaction: 
+ * Reaction Channel: 
  *      multiset of reactants -> multiset of products
  *      A reaction gets its reactants from and releases its products into the environment (Substrate)
- *      The rateFactor (default: 1) can be used to adjust the reaction speed
+ *      The rateFactor (default: 1) is intrinsic to a particular reaction and determines the reaction speed
  */
 class Reaction() implements Reaction {
     String id = "SetMe";
-    Rat rateFactor = 1;
+    Rat rate = 1;
+    Int energyConsumption = 0;
+    
     Map<Substance, Int> reactants = EmptyMap;
     Map<Substance, Int> products = EmptyMap;
      
@@ -30,30 +33,42 @@ class Reaction() implements Reaction {
     Unit addProduct(Substance p, Int n) {
         products = insert(products, Pair(p, n));
     }
-    Unit setRateFactor(Rat f) {
-        rateFactor = f;
+    Unit setRate(Rat f) {
+        rate = f;
+    }
+    Rat getRate() {
+        return rate;
+    }
+    Unit setEnergyConsumption(Int i) {
+        energyConsumption = i;
     }
     
+    
+    /* A reaction occurs if the necessary reactants exist
+     * After that, the channel waits for a certain duration (which depends on the reaction rate)
+     */
     Unit start(Substrate env) {
         Bool ok = await env!testSubstances(keys(reactants));
         assert ok;
-        
+        this.loop(env);
+    }
+    
+    Unit loop(Substrate env) {
         while(True) {
-            Int envRate = await env!reactionRate(reactants);
-            if (envRate != 0) {
-	            Bool can = await env!consumeSubstances(reactants);
-	            if (can) {
-	                //produce
-	                await env!produceSubstances(products);
-                    
-	                // Wait for a duration inverse to the reaction rate
-	                Rat rate = envRate * rateFactor;
-	                duration(1/rate, 1/rate);
+            Int factor = await env!reactionFactor(reactants);
+            Bool can = await env!consumeSubstances(reactants);
+            if (can) {
+                //produce
+                await env!produceSubstances(products);
+                
+                // Wait for a duration inverse to the reaction rate
+                // TODO Mass action formula
+                Rat currentRate = rate * factor;
+                assert currentRate > 0;
+                duration(1/currentRate, 1/currentRate);
 
-                    // log
-                    String name = this.toString();
-                    await env!logRate(id, rate);
-                }
+                // log
+                await env!logRate(id, currentRate);
             }
         }
     }
@@ -79,7 +94,7 @@ class Reaction() implements Reaction {
             res = res + name(s);
             plus = "+";
         }
-        res = res + "->";
+        res = res + "--" + toString(rate) + "->";
         subst = keys(products);
         plus = "";
         while (hasNext(subst)) {

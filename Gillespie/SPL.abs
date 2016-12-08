@@ -1,0 +1,10 @@
+productline PL;
+features FineGrained;
+delta DFineGrained when FineGrained;
+
+product Fine(FineGrained);
+
+root Gillespie {
+    group allof { opt FineGrained }
+}
+

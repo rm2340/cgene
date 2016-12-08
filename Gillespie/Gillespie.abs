@@ -1,7 +1,8 @@
 module Gillespie;
-export *;
+export Substance, name;
+export Substrate;
 import * from ABS.StdLib;
-import * from Reaction;
+import Reaction from Reaction;
 import * from Math;
 
 // A Substance
@@ -16,12 +17,13 @@ interface Substrate {
     Bool testSubstances(Set<Substance> reactants);
     Bool consumeSubstances(Map<Substance, Int> consumption);
     Unit produceSubstances(Map<Substance, Int> production);
-    Int reactionRate(Map<Substance, Int> consumption);
+    Int reactionFactor(Map<Substance, Int> consumption);
     Unit run();
     Unit logRate(String desc, Rat rate);
 }
 
 class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) implements Substrate {
+    Map<Reaction,Rat> reactionRates = EmptyMap;
     
     Unit run() {
         this.logInit();
@@ -76,7 +78,6 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
 	        requiredSubstances = remove(requiredSubstances, s);
 	        Int q = lookupUnsafe(consumption, s);
             Int availableQuantity = lookupUnsafe(substances, s);
-            Rat ratio = q / availableQuantity;
             if (q > availableQuantity) {
                 continue = False;
             }
@@ -111,29 +112,30 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
         this.logg();
     }
     
-    /* Return the reaction rate as a function of the quantity of currently 
-     * available molecules of all reactants.
-     * Zero if at least one reactant has zero molecules.
+    /* The reaction factor is a function of the quantity of available molecules of all reactants.
+     * Default: 1
+     * If zero (at least one reactant has zero molecules), revert to default
      *
      * TODO: Consider the quantity of required molecules (consumption)?
      */
-    Int reactionRate(Map<Substance, Int> consumption) {
+    Int reactionFactor(Map<Substance, Int> consumption) {
         Set<Substance> availableSubstances = keys(substances);
         Set<Substance> requiredSubstances = keys(consumption);
         
-        Int reactionRate = 1;   
+        Int reactionFactor = 1;   
         while (hasNext(requiredSubstances)) {
             Substance s = take(requiredSubstances);
             requiredSubstances = remove(requiredSubstances, s);
             Int availableQuantity = lookupUnsafe(substances, s);
-            reactionRate = reactionRate * availableQuantity;
+            reactionFactor = reactionFactor * availableQuantity;
         }
-        return reactionRate;
+        // If at least one reactant has quantity zero, assume the default factor of 1 (avoid division by zero later).
+        if (reactionFactor == 0) {
+            reactionFactor = 1;
+        }
+        assert reactionFactor >= 1;
+        return reactionFactor;
     }
-    
-    
-    
-    
     
     
     
@@ -168,5 +170,3 @@ class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) impleme
         println("   " + toString(numerator(rate)) + " " + toString(denominator(rate)));    
     }
 }
-
-
