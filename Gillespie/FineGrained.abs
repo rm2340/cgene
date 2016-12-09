@@ -33,7 +33,7 @@ modifies class Gillespie.Substrate {
      */
     adds Pair<Bool,Rat> step(Reaction reaction, Rat reactionRate, Map<Substance, Int> consumption) {
         String s = await reaction!toString(); 
-        println("****************************"); print(toString(now())); println(" :step: " + s);
+//        println("****************************"); print(toString(now())); println(" :step: " + s);
         
         Int factor = this.reactionFactor(consumption);
         Rat rate = reactionRate * factor;
@@ -41,11 +41,11 @@ modifies class Gillespie.Substrate {
         
         // occurence interval
         Rat interval = 1/rate;
-        println("interval: " + toString(interval));
+//        println("interval: " + toString(interval));
 
         // time since last occurence
         Rat time_passed = lookupDefault(reactionRates, reaction, 0);
-        println("time_passed: " + toString(time_passed));
+//        println("time_passed: " + toString(time_passed));
         
         // minimal interval among all reactions
         Rat interval_min = interval;
@@ -64,8 +64,8 @@ modifies class Gillespie.Substrate {
         } else {
             reactionRates = put(reactionRates, reaction, time_passed + interval_min);
         }
-        println("occur: " + toString(occur));
-        println("wait: " + toString(interval_min));
+//        println("occur: " + toString(occur));
+//        println("wait: " + toString(interval_min));
         return Pair(occur, interval_min);
     }
     
