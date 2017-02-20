@@ -24,8 +24,8 @@ class Reaction() implements Reaction {
     Rat rate = 1;
     Int energyConsumption = 0;
     
-    Map<Substance, Int> reactants = EmptyMap;
-    Map<Substance, Int> products = EmptyMap;
+    Map<Substance, Int> reactants = map[];
+    Map<Substance, Int> products = map[];
      
     Unit addReactant(Substance r, Int n) {
         reactants = insert(reactants, Pair(r, n));

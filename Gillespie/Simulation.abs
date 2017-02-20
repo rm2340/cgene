@@ -4,8 +4,8 @@ import * from Reaction;
 import * from ABS.DC;
 
 {
-    Map<Substance, Int> substances = EmptyMap;
-    Set<Reaction> reactions = EmptySet;
+    Map<Substance, Int> substances = map[];
+    Set<Reaction> reactions = set[];
 
     Substance tf = Substance("TF");
     Substance p = Substance("P");
@@ -15,7 +15,7 @@ import * from ABS.DC;
     Substance prot = Substance("Protein");
     
     substances = insert(substances, Pair(mrna, 100));
-    substances = insert(substances, Pair(prot, 0));
+    substances = insert(substances, Pair(prot, 6));
 
 
 /*

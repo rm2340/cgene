@@ -23,7 +23,7 @@ interface Substrate {
 }
 
 class Substrate(Map<Substance, Int> substances, Set<Reaction> reactions) implements Substrate {
-    Map<Reaction,Rat> reactionRates = EmptyMap;
+    Map<Reaction,Rat> reactionRates = map[];
     
     Unit run() {
         this.logInit();
