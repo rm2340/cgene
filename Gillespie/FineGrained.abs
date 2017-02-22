@@ -7,18 +7,23 @@ modifies class Reaction.Reaction {
 	        //Pair<Bool,Rat> waitOccur = await env!step(this, rate, reactants);
 	        Fut<Pair<Bool,Rat>> f = env!step(this, rate, reactants);
 	        await f?;
-	        Pair<Bool,Rat> waitOccur = f.get;
-	        if(fst(waitOccur)) {
+            /* occurInterval has two values:
+             * first: Bool: determines whether the reaction can now occur
+             * second: Rat: how long we should wait until calling step() again
+             */
+            Pair<Bool,Rat> occurInterval = f.get;
+            Bool occur = fst(occurInterval);
+            Rat wait = snd(occurInterval);
+            if(occur) {
 	            Bool can = await env!consumeSubstances(reactants);
 	            if (can) {
 	                await env!produceSubstances(products);
 	            }
 	        }
-	        Rat t = snd(waitOccur);
-	        duration(t, t);
+            duration(wait, wait);
 	        // log
 	        String name = this.toString();
-	        await env!logRate(id, t);
+            await env!logRate(id, wait);
 	    }
     }
 }
@@ -28,8 +33,10 @@ modifies interface Gillespie.Substrate {
 }
 
 modifies class Gillespie.Substrate {
-    /*
-     *
+    /* Determine whether reaction can occur under current circumstances
+     * Returns a pair of values:
+     *    Bool: True if reaction can occur
+     *    Rat:  duration - how long the reaction should wait until next check
      */
     adds Pair<Bool,Rat> step(Reaction reaction, Rat reactionRate, Map<Substance, Int> consumption) {
         String s = await reaction!toString(); 

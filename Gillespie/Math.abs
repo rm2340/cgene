@@ -1,4 +1,4 @@
-module Math;
+module MathAux;
 export log;
 import * from ABS.StdLib;
 

@@ -3,7 +3,7 @@ export Substance, name;
 export Substrate;
 import * from ABS.StdLib;
 import Reaction from Reaction;
-import * from Math;
+import * from MathAux;
 
 // A Substance
 data Substance = Substance(String name);

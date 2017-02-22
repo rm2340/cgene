@@ -15,7 +15,7 @@ import * from ABS.DC;
     Substance prot = Substance("Protein");
     
     substances = insert(substances, Pair(mrna, 100));
-    substances = insert(substances, Pair(prot, 6));
+    substances = insert(substances, Pair(prot, 0));
 
 
 /*
