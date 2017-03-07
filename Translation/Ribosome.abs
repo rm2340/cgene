@@ -1,0 +1,31 @@
+module Ribosome;
+export Ribosome;
+import * from Transcription;
+import * from Cell;
+import * from Protein;
+
+interface Ribosome {
+    Unit run();
+    Protein decode(Mrna mrna);
+}
+
+
+/* Model of a ribosome 
+ * synthesizing protein from mRNA
+ */
+class Ribosome(Cell cell) implements Ribosome {
+    
+    Unit run() {
+        while (True) {
+            // obtain mRNA & attach to mRNA, decode mRNA (ste by step), detach upon encountering stop codon
+            Mrna mrna = await cell!obtainMrna();
+            Protein prot = decode(mrna);
+            
+        }
+    }
+    
+    
+    Protein decode(Mrna mrna) {
+
+    }
+}

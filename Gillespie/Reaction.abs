@@ -24,6 +24,9 @@ class Reaction() implements Reaction {
     Rat rate = 1;
     Int energyConsumption = 0;
     
+    /* These maps determine the substances and quantities that are consumed/produced  
+     * when the reaction occurs.
+     */
     Map<Substance, Int> reactants = map[];
     Map<Substance, Int> products = map[];
      
