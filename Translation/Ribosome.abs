@@ -6,7 +6,7 @@ import * from Protein;
 
 interface Ribosome {
     Unit run();
-    Protein decode(Mrna mrna);
+    Unit decode(Mrna mrna);
 }
 
 
@@ -19,13 +19,15 @@ class Ribosome(Cell cell) implements Ribosome {
         while (True) {
             // obtain mRNA & attach to mRNA, decode mRNA (ste by step), detach upon encountering stop codon
             Mrna mrna = await cell!obtainMrna();
-            Protein prot = decode(mrna);
+            this.decode(mrna);
             
         }
     }
     
     
-    Protein decode(Mrna mrna) {
-
+    Unit decode(Mrna mrna) {
+        
+        Protein prot = new Protein();
+        await cell!addProtein(prot);
     }
 }

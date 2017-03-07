@@ -1,4 +1,4 @@
-module Translation;
+module Cell;
 export Cell;
 import * from Transcription;
 import * from Ribosome;
@@ -7,22 +7,27 @@ import * from Protein;
 interface Cell {
     Unit addMRNA(Mrna mrna);
     Unit addRibosome(Ribosome ribo);
+    Unit addProtein(Protein prot);
     Mrna obtainMrna();
 }
 
 class Cell implements Cell {
-    List<Mrna> mrnaStrands = set[];
+    List<Mrna> mrnaStrands = list[];
     Set<Ribosome> ribosomes = set[];
     Set<Protein> proteins = set[];
     
     Unit addMRNA(Mrna mrna) {
-        insertElement(mrnaStrands, mrna);
+        appendright(mrnaStrands, mrna);
     }
     
     Unit addRibosome(Ribosome ribo) {
         insertElement(ribosomes, ribo);
     }
     
+    Unit addProtein(Protein prot) {
+        insertElement(proteins, prot);
+    }
+
     // Randomly return one of the mRNA strands for decoding 
     Mrna obtainMrna() {
         Int n = random(length(mrnaStrands));
