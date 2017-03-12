@@ -44,10 +44,12 @@ class Ribosome(Cell cell) implements Ribosome {
         while(! stop(codon)) {
             // read codon
             codon = await mrna!readCodon(pos);
+            print("Codon: " + toString(codon));
             Nucleotide n1 = nth(codon, 0);
             Nucleotide n2 = nth(codon, 1);
             Nucleotide n3 = nth(codon, 2);
             Aminoacid a = aminoacid(n1, n2, n3);
+            println("  --> Aminoacid: " + toString(a));
             await prot!add(a);
 
             // advance

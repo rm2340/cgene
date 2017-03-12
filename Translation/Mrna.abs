@@ -1,0 +1,87 @@
+module Mrna;
+export Mrna, Nucleotide, A, C, G, U, nuc, stop;
+import * from Ribosome;
+
+// adenine, cytosine, guanine, uracil
+data Nucleotide = A | C | G | U;
+
+def Nucleotide nuc() =
+    case random(4) {
+        0 => A;
+        1 => C;
+        2 => G;
+        3 => U;
+    };
+
+
+/* // Would be nice if this would work...
+def Bool stop(List<Nucleotide> codon) =
+    case codon {
+        list[U, A, A] => true;
+        list[U, A, G] => true;
+        list[U, G, A] => true;
+        _ => false;
+    };
+*/
+
+def Bool stop(List<Nucleotide> codon) =
+    case codon {
+        Cons(U, Cons(A, Cons(A, Nil))) => True;
+        Cons(U, Cons(A, Cons(G, Nil))) => True;
+        Cons(U, Cons(G, Cons(A, Nil))) => True;
+        _ => False;
+    };
+
+
+interface Mrna {
+    Bool attach(Ribosome rib);
+    Unit advance(Ribosome rib, Int pos);
+    List<Nucleotide> readCodon(Int pos);
+    String toString();
+}
+
+class Mrna(List<Nucleotide> mrna) implements Mrna {
+
+    // This map remembers the positions of ribosomes in the mRNA strand
+    // Only one ribosome can be at a certain position
+    Map<Int, Maybe<Ribosome>> occupancy = map[];
+
+    // init block (constructor)
+    {
+        Int i = 0;
+        while(i < length(mrna)) {
+            occupancy = put(occupancy, i, Nothing);
+            i = i + 1;
+        }
+    }
+
+
+    // Attach ribosome at the start of the strand (position 0)
+    Bool attach(Ribosome rib) {
+        Bool success = False;
+        if (lookupUnsafe(occupancy, 0) == Nothing) {
+            put(occupancy, 0, Just(rib));
+            success = True;
+        }
+        return success;
+    }
+
+    // Move the Ribosome rib from position pos to pos+3 (one codon further)
+    Unit advance(Ribosome rib, Int pos) {
+        //wait until next position is free
+        await(lookupUnsafe(occupancy, pos+3) == Nothing);
+
+        // clear current position & move rib to next position
+        occupancy = put(put(occupancy, pos, Nothing), pos+3, Just(rib));
+    }
+
+    // Read codon at position pos
+    List<Nucleotide> readCodon(Int pos) {
+        List<Nucleotide> codon = list[nth(mrna, pos), nth(mrna, pos+1), nth(mrna, pos+2)];
+        return codon;
+    }
+
+    String toString() {
+        return toString(mrna);
+    }
+}
