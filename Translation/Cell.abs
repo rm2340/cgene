@@ -27,6 +27,7 @@ class Cell implements Cell {
 
     Unit addProtein(Protein prot) {
         proteins = insertElement(proteins, prot);
+        println("Proteins: " + toString(size(proteins)));
     }
 
     // Randomly return one of the mRNA strands for decoding
@@ -34,7 +35,7 @@ class Cell implements Cell {
         Int n = random(length(mrnaStrands));
         Mrna mrna = nth(mrnaStrands, n);
         String s = await mrna!toString();
-        println("Cell: offering mRNA: " + s);
+        //println("Cell: offering mRNA: " + s);
         return mrna;
     }
 }
@@ -49,10 +50,13 @@ class Cell implements Cell {
     Transcription ts = new Transcription();
 
     Int i = 0;
-    Int population = 1; // how many objects to generate
+
+    // Initial populations
+    Int pop_mrna = 1;
+    Int pop_rib = 100;
 
 
-    while (i < population) {
+    while (i < pop_mrna) {
         Mrna mrna = ts.genMRNA();
         cell.addMRNA(mrna);
         i = i + 1;
@@ -60,7 +64,7 @@ class Cell implements Cell {
 
     // populate cell with ribosomes
     i = 0;
-    while (i < population) {
+    while (i < pop_rib) {
         Ribosome ribo = new Ribosome(cell);
         cell.addRibosome(ribo);
         i = i + 1;

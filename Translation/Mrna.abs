@@ -35,6 +35,7 @@ def Bool stop(List<Nucleotide> codon) =
 
 interface Mrna {
     Bool attach(Ribosome rib);
+    Unit detach(Ribosome rib, Int pos);
     Unit advance(Ribosome rib, Int pos);
     List<Nucleotide> readCodon(Int pos);
     String toString();
@@ -60,10 +61,21 @@ class Mrna(List<Nucleotide> mrna) implements Mrna {
     Bool attach(Ribosome rib) {
         Bool success = False;
         if (lookupUnsafe(occupancy, 0) == Nothing) {
-            put(occupancy, 0, Just(rib));
+            occupancy = put(occupancy, 0, Just(rib));
             success = True;
+            //println("Ribosome attached to mRNA");
         }
         return success;
+    }
+
+    Unit detach(Ribosome rib, Int pos) {
+        // assume rib is indeed at pos
+        assert lookupUnsafe(occupancy, pos) == Just(rib);
+
+        // clear pos
+        occupancy = put(occupancy, pos, Nothing);
+        //println("Ribosome detached from mRNA");
+        duration(1,1);
     }
 
     // Move the Ribosome rib from position pos to pos+3 (one codon further)
@@ -71,8 +83,11 @@ class Mrna(List<Nucleotide> mrna) implements Mrna {
         //wait until next position is free
         await(lookupUnsafe(occupancy, pos+3) == Nothing);
 
-        // clear current position & move rib to next position
+        // clear current pos & move rib to next pos
         occupancy = put(put(occupancy, pos, Nothing), pos+3, Just(rib));
+
+        String s = this.occupancyToString();
+        println("Occupancy: " + s);
     }
 
     // Read codon at position pos
@@ -84,4 +99,17 @@ class Mrna(List<Nucleotide> mrna) implements Mrna {
     String toString() {
         return toString(mrna);
     }
+    String occupancyToString() {
+        String res = "";
+        Int i = 0;
+        while(i < size(keys(occupancy))) {
+            if (lookupUnsafe(occupancy, i) == Nothing)
+                res = res + "- ";
+            else
+                res = res + "* ";
+            i = i + 1;
+        }
+        return res;
+    }
+
 }
