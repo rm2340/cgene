@@ -1,6 +1,7 @@
 module Cell;
 export Cell;
 import * from Transcription;
+import * from Mrna;
 import * from Ribosome;
 import * from Protein;
 
@@ -15,23 +16,26 @@ class Cell implements Cell {
     List<Mrna> mrnaStrands = list[];
     Set<Ribosome> ribosomes = set[];
     Set<Protein> proteins = set[];
-    
+
     Unit addMRNA(Mrna mrna) {
-        appendright(mrnaStrands, mrna);
-    }
-    
-    Unit addRibosome(Ribosome ribo) {
-        insertElement(ribosomes, ribo);
-    }
-    
-    Unit addProtein(Protein prot) {
-        insertElement(proteins, prot);
+        mrnaStrands = appendright(mrnaStrands, mrna);
     }
 
-    // Randomly return one of the mRNA strands for decoding 
+    Unit addRibosome(Ribosome ribo) {
+        ribosomes = insertElement(ribosomes, ribo);
+    }
+
+    Unit addProtein(Protein prot) {
+        proteins = insertElement(proteins, prot);
+    }
+
+    // Randomly return one of the mRNA strands for decoding
     Mrna obtainMrna() {
         Int n = random(length(mrnaStrands));
-        return nth(mrnaStrands, n);
+        Mrna mrna = nth(mrnaStrands, n);
+        String s = await mrna!toString();
+        println("Cell: offering mRNA: " + s);
+        return mrna;
     }
 }
 
@@ -43,9 +47,12 @@ class Cell implements Cell {
 
     // populate cell with mRNA strands
     Transcription ts = new Transcription();
-    
+
     Int i = 0;
-    while (i < 100) {
+    Int population = 1; // how many objects to generate
+
+
+    while (i < population) {
         Mrna mrna = ts.genMRNA();
         cell.addMRNA(mrna);
         i = i + 1;
@@ -53,7 +60,7 @@ class Cell implements Cell {
 
     // populate cell with ribosomes
     i = 0;
-    while (i < 100) {
+    while (i < population) {
         Ribosome ribo = new Ribosome(cell);
         cell.addRibosome(ribo);
         i = i + 1;

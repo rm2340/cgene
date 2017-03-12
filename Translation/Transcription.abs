@@ -1,100 +1,31 @@
-/* This doesn't really simulate transcription yet, 
+/* This doesn't really simulate transcription yet,
  * it just generates random mRNA strands...
  */
 module Transcription;
-export Transcription, Mrna;
-
-
-// adenine, cytosine, guanine, uracil 
-data Nucleotide = A | C | G | U;
-
-def Nucleotide nuc() =
-    case random(4) {
-        0 => A;
-        1 => C;
-        2 => G;
-        3 => U;
-    };
-
-
-/* // Would be nice if this would work...
-def Bool stop(List<Nucleotide> codon) =
-    case codon {
-        list[U, A, A] => true;
-        list[U, A, G] => true;
-        list[U, G, A] => true;
-        _ => false;
-    };
-*/
-
-def Bool stop(List<Nucleotide> codon) =
-    case codon {
-        Cons(U, Cons(A, Cons(A, Nil))) => True;
-        Cons(U, Cons(A, Cons(G, Nil))) => True;
-        Cons(U, Cons(G, Cons(A, Nil))) => True;
-        _ => False;
-    };
-
-
-interface Mrna {}
-
-class Mrna(List<Nucleotide> mrna) implements Mrna {
-    
-    // This map remembers whether there is a ribosome currently attached (True) at each nucleotide
-    Map<Int, Bool> occupancy = map[];
-
-    // init block (constructor)
-    {
-        Int i = 0;
-        while(i < length(mrna)) {
-            put(occupancy, i, False);
-            i = i + 1;
-        }   
-    }
-    
-    
-    // Attach ribosome at the start of the strand (position 0)
-    Bool attach() {
-        Bool success = False;
-        if (lookupUnsafe(occupancy, 0)) {
-            // go away!
-        } else {
-            put(occupancy, 0, True);
-            success = True;
-        }
-        return success;
-    }
-    
-    // Advance ribosome to position + 1
-    Nucleotide advance(Int position) {
-        await(lookupUnsafe(occupancy, position + 1));
-        put(occupancy, position, False);
-        put(occupancy, position + 1, False);
-        Nucleotide n = nth(mrna, position + 1);
-        return n;
-    }
-}
+export Transcription;
+import * from Mrna;
 
 
 interface Transcription {
     Mrna genMRNA();
 }
+
 class Transcription implements Transcription {
 
     Mrna genMRNA() {
         // Start list with a start codon
 		List<Nucleotide> codon = list[A, U, G];
 		List<Nucleotide> mrna = codon;
-		
+
 		while (! stop(codon)) {
 		    // Add random codon to mrna strand
 		    codon = list[nuc(), nuc(), nuc()];
 		    mrna = concatenate(mrna, codon);
 		}
         return new Mrna(mrna);
-        
+
         //println(toString(mrna));
     }
 
-}    
+}
 

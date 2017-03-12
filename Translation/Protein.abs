@@ -1,16 +1,23 @@
 module Protein;
-export Protein;
+export *;
 
-// I thought there were 20!?
-data Aminoacid = 
-    Phe | Leu | Ile | Met | Val |
-    Ser | Pro | Thr | Ala | Tyr |
-    His | Glu | Asn | Lys | Asp |
-    Cys | Trp | Arg | Gly;
+// There are 20
+data Aminoacid =
+    Ala | Arg | Asn | Asp | Cys |
+    Gln | Glu | Gly | His | Ile |
+    Leu | Lys | Met | Phe | Pro |
+    Ser | Thr | Trp | Tyr | Val | Stp;
 
-interface Protein {}
+
+interface Protein {
+    Unit add(Aminoacid a);
+}
 
 // A protein is a chain (list) of amino acids
 class Protein implements Protein {
     List<Aminoacid> chain = list[];
+
+    Unit add(Aminoacid a) {
+        chain = appendright(chain, a);
+    }
 }

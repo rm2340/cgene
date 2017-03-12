@@ -1,6 +1,6 @@
 module Ribosome;
 export Ribosome;
-import * from Transcription;
+import * from Mrna;
 import * from Cell;
 import * from Protein;
 
@@ -10,24 +10,121 @@ interface Ribosome {
 }
 
 
-/* Model of a ribosome 
+/* Model of a ribosome
  * synthesizing protein from mRNA
  */
 class Ribosome(Cell cell) implements Ribosome {
-    
+
     Unit run() {
         while (True) {
-            // obtain mRNA & attach to mRNA, decode mRNA (ste by step), detach upon encountering stop codon
+            /* Try to obtain mRNA; if successful,
+             *     attach to mRNA,
+             *     decode mRNA (ste by step),
+             *     detach upon encountering stop codon
+             */
             Mrna mrna = await cell!obtainMrna();
-            this.decode(mrna);
-            
+            Bool attached = await mrna!attach(this);
+            if (attached) {
+                println("Ribosome attached to mRNA");
+                this.decode(mrna);
+            } else {
+                println("Ribosome failed to attach to mRNA");
+
+            }
         }
     }
-    
-    
+
     Unit decode(Mrna mrna) {
-        
         Protein prot = new Protein();
         await cell!addProtein(prot);
+
+        Int pos = 0;
+        List<Nucleotide> codon = list[];
+
+        while(! stop(codon)) {
+            // read codon
+            codon = await mrna!readCodon(pos);
+            Nucleotide n1 = nth(codon, 0);
+            Nucleotide n2 = nth(codon, 1);
+            Nucleotide n3 = nth(codon, 2);
+            Aminoacid a = aminoacid(n1, n2, n3);
+            await prot!add(a);
+
+            // advance
+            await mrna!advance(this, pos);
+            pos = pos + 3;
+        }
+
     }
+
 }
+
+
+// decode codon into specific amino acid
+def Aminoacid aminoacid(Nucleotide n1, Nucleotide n2, Nucleotide n3) =
+        case n1 {
+            U => case n2 {
+                U => case n3 {
+                    U => Phe;
+                    C => Phe;
+                    A => Leu;
+                    G => Leu;
+                };
+                C => Ser;
+                A => case n3 {
+                    U => Tyr;
+                    C => Tyr;
+                    A => Stp;
+                    G => Stp;
+                };
+                G => case n3 {
+                    U => Cys;
+                    C => Cys;
+                    A => Stp;
+                    G => Trp;
+                };
+            };
+            C => case n2 {
+                U => Leu;
+                C => Pro;
+                A => case n3 {
+                    U => His;
+                    C => His;
+                    A => Gln;
+                    G => Gln;
+                };
+                G => Arg;
+            };
+            A => case n2 {
+                U => case n3 {
+                    U => Ile;
+                    C => Ile;
+                    A => Ile;
+                    G => Met;
+                };
+                C => Thr;
+                A => case n3 {
+                    U => Asn;
+                    C => Asn;
+                    A => Lys;
+                    G => Lys;
+                };
+                G => case n3 {
+                    U => Ser;
+                    C => Ser;
+                    A => Arg;
+                    G => Arg;
+                };
+            };
+            G => case n2 {
+                U => Val;
+                C => Ala;
+                A => case n3 {
+                    U => Asp;
+                    C => Asp;
+                    A => Glu;
+                    G => Glu;
+                };
+                G => Gly;
+            };
+        };
