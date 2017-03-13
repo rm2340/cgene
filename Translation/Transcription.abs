@@ -1,5 +1,6 @@
-/* This doesn't really simulate transcription yet,
- * it just generates random mRNA strands...
+/* This very abstractly simulates transcription,
+ * by generating random mRNA strands.
+ * Corresponds to reaction: 0 -> mRNA (constant rate)
  */
 module Transcription;
 export Transcription;
@@ -7,10 +8,15 @@ import * from Mrna;
 
 
 interface Transcription {
+    Unit run();
     Mrna genMRNA();
 }
 
 class Transcription implements Transcription {
+
+    Unit run() {
+
+    }
 
     Mrna genMRNA() {
         // Start list with a start codon

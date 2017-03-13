@@ -44,20 +44,18 @@ class Cell implements Cell {
 /* Main block */
 
 {
-    Cell cell = new Cell();
-
-    // populate cell with mRNA strands
-    Transcription ts = new Transcription();
-
-    Int i = 0;
+    Cell cell = new local Cell();
 
     // Initial populations
     Int pop_mrna = 1;
     Int pop_rib = 100;
 
+    // populate cell with mRNA strands
+    Transcription ts = new Transcription();
 
+    Int i = 0;
     while (i < pop_mrna) {
-        Mrna mrna = ts.genMRNA();
+        Mrna mrna = await ts!genMRNA();
         cell.addMRNA(mrna);
         i = i + 1;
     }
@@ -69,6 +67,5 @@ class Cell implements Cell {
         cell.addRibosome(ribo);
         i = i + 1;
     }
-
 
 }
