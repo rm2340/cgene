@@ -4,12 +4,19 @@ import * from Transcription;
 import * from Mrna;
 import * from Ribosome;
 import * from Protein;
+import * from Degradation;
+
 
 interface Cell {
     Unit addMRNA(Mrna mrna);
     Unit addRibosome(Ribosome ribo);
     Unit addProtein(Protein prot);
     Mrna obtainMrna();
+
+    Int getQuantProtein();
+    Unit degradeProtein();
+    Int getQuantMrna();
+    Unit degradeMrna();
 }
 
 class Cell implements Cell {
@@ -19,6 +26,7 @@ class Cell implements Cell {
 
     Unit addMRNA(Mrna mrna) {
         mrnaStrands = appendright(mrnaStrands, mrna);
+        //println(toString(length(mrnaStrands)));
     }
 
     Unit addRibosome(Ribosome ribo) {
@@ -30,11 +38,28 @@ class Cell implements Cell {
         println("Proteins: " + toString(size(proteins)));
     }
 
+    Int getQuantProtein() {
+        return size(proteins);
+    }
+    Unit degradeProtein() {
+        assert size(proteins) > 0;
+        Protein p = take(proteins);
+        proteins = remove(proteins, p);
+    }
+    Int getQuantMrna() {
+        return length(mrnaStrands);
+    }
+    Unit degradeMrna() {
+        assert length(mrnaStrands) > 0;
+        mrnaStrands = tail(mrnaStrands);
+    }
+
     // Randomly return one of the mRNA strands for decoding
     Mrna obtainMrna() {
+        await length(mrnaStrands) > 0;
         Int n = random(length(mrnaStrands));
         Mrna mrna = nth(mrnaStrands, n);
-        String s = await mrna!toString();
+        //String s = await mrna!toString();
         //println("Cell: offering mRNA: " + s);
         return mrna;
     }
@@ -46,22 +71,24 @@ class Cell implements Cell {
 {
     Cell cell = new local Cell();
 
+    // Start mRNA transcription
+    // 0 -> mRNA, rate
+    Transcription ts = new Transcription(cell, 50);
+
+    // Start degradation
+    // Prot -> 0, rate
+    // mRNA -> 0, rate
+    Degradation pd = new ProteinDegradation(cell, 1);
+    //Degradation md = new MrnaDegradation(cell, 1);
+
+
     // Initial populations
-    Int pop_mrna = 1;
     Int pop_rib = 100;
 
-    // populate cell with mRNA strands
-    Transcription ts = new Transcription();
-
+    /*
+     * Populate cell with ribosomes
+     */
     Int i = 0;
-    while (i < pop_mrna) {
-        Mrna mrna = await ts!genMRNA();
-        cell.addMRNA(mrna);
-        i = i + 1;
-    }
-
-    // populate cell with ribosomes
-    i = 0;
     while (i < pop_rib) {
         Ribosome ribo = new Ribosome(cell);
         cell.addRibosome(ribo);

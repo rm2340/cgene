@@ -5,6 +5,7 @@
 module Transcription;
 export Transcription;
 import * from Mrna;
+import * from Cell;
 
 
 interface Transcription {
@@ -12,10 +13,14 @@ interface Transcription {
     Mrna genMRNA();
 }
 
-class Transcription implements Transcription {
+class Transcription(Cell cell, Int rate) implements Transcription {
 
     Unit run() {
-
+        while(True) {
+            Mrna mrna = this.genMRNA();
+            await cell!addMRNA(mrna);
+            duration(1/rate, 1/rate);
+        }
     }
 
     Mrna genMRNA() {

@@ -54,11 +54,17 @@ class Ribosome(Cell cell) implements Ribosome {
                 //println("  --> Aminoacid: " + toString(a));
                 await prot!add(a);
 
+                // on average, mrna strand has 64/3=21 nucleotides...
+                // very crude way to say that decoding the entire mrna should take 1 time unit
+                // duration(3/64, 3/64);
+
                 // advance
                 await mrna!advance(this, pos);
                 pos = pos + 3;
             }
         }
+        // or just say deconding the entire mrna takes 1 t, regadless of how long it is
+        duration(1,1);
 
     }
 
@@ -67,69 +73,69 @@ class Ribosome(Cell cell) implements Ribosome {
 
 // decode codon into specific amino acid
 def Aminoacid aminoacid(Nucleotide n1, Nucleotide n2, Nucleotide n3) =
-        case n1 {
-            U => case n2 {
-                U => case n3 {
-                    U => Phe;
-                    C => Phe;
-                    A => Leu;
-                    G => Leu;
-                };
-                C => Ser;
-                A => case n3 {
-                    U => Tyr;
-                    C => Tyr;
-                    A => Stp;
-                    G => Stp;
-                };
-                G => case n3 {
-                    U => Cys;
-                    C => Cys;
-                    A => Stp;
-                    G => Trp;
-                };
+    case n1 {
+        U => case n2 {
+            U => case n3 {
+                U => Phe;
+                C => Phe;
+                A => Leu;
+                G => Leu;
             };
-            C => case n2 {
-                U => Leu;
-                C => Pro;
-                A => case n3 {
-                    U => His;
-                    C => His;
-                    A => Gln;
-                    G => Gln;
-                };
-                G => Arg;
+            C => Ser;
+            A => case n3 {
+                U => Tyr;
+                C => Tyr;
+                A => Stp;
+                G => Stp;
             };
-            A => case n2 {
-                U => case n3 {
-                    U => Ile;
-                    C => Ile;
-                    A => Ile;
-                    G => Met;
-                };
-                C => Thr;
-                A => case n3 {
-                    U => Asn;
-                    C => Asn;
-                    A => Lys;
-                    G => Lys;
-                };
-                G => case n3 {
-                    U => Ser;
-                    C => Ser;
-                    A => Arg;
-                    G => Arg;
-                };
-            };
-            G => case n2 {
-                U => Val;
-                C => Ala;
-                A => case n3 {
-                    U => Asp;
-                    C => Asp;
-                    A => Glu;
-                    G => Glu;
-                };
-                G => Gly;
+            G => case n3 {
+                U => Cys;
+                C => Cys;
+                A => Stp;
+                G => Trp;
             };
         };
+        C => case n2 {
+            U => Leu;
+            C => Pro;
+            A => case n3 {
+                U => His;
+                C => His;
+                A => Gln;
+                G => Gln;
+            };
+            G => Arg;
+        };
+        A => case n2 {
+            U => case n3 {
+                U => Ile;
+                C => Ile;
+                A => Ile;
+                G => Met;
+            };
+            C => Thr;
+            A => case n3 {
+                U => Asn;
+                C => Asn;
+                A => Lys;
+                G => Lys;
+            };
+            G => case n3 {
+                U => Ser;
+                C => Ser;
+                A => Arg;
+                G => Arg;
+            };
+        };
+        G => case n2 {
+            U => Val;
+            C => Ala;
+            A => case n3 {
+                U => Asp;
+                C => Asp;
+                A => Glu;
+                G => Glu;
+            };
+            G => Gly;
+        };
+    };

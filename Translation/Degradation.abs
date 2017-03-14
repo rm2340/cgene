@@ -1,0 +1,36 @@
+module Degradation;
+export *;
+import * from Cell;
+
+
+interface Degradation {
+    Unit run();
+}
+
+class ProteinDegradation (Cell cell, Int rate) implements Degradation {
+    Unit run() {
+        while (True) {
+            Int quantity = await cell!getQuantProtein();
+            if (quantity > 0) {
+                Rat d = 1 / (rate * quantity);
+                duration(d, d);
+                await cell!degradeProtein();
+            }
+        }
+    }
+
+}
+
+class MrnaDegradation (Cell cell, Int rate) implements Degradation {
+    Unit run() {
+        while (True) {
+            Int quantity = await cell!getQuantMrna();
+            if (quantity > 0) {
+                Rat d = 1 / (rate * quantity);
+                duration(d, d);
+                await cell!degradeMrna();
+            }
+        }
+    }
+
+}
