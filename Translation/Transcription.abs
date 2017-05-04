@@ -10,29 +10,45 @@ import * from Cell;
 
 interface Transcription {
     Unit run();
-    Mrna genMRNA();
+    Mrna genMRNA(Int len);
 }
 
 class Transcription(Cell cell, Int rate) implements Transcription {
 
     Unit run() {
-        while(True) {
-            Mrna mrna = this.genMRNA();
+        //while(True) {
+            Mrna mrna = this.genMRNA(1000000);
             await cell!addMRNA(mrna);
             duration(1/rate, 1/rate);
-        }
+        //}
     }
 
-    Mrna genMRNA() {
+    /*
+     * Generate random mRNA molecule of length len codons
+     */
+    Mrna genMRNA(Int len) {
         // Start list with a start codon
 		List<Nucleotide> codon = list[A, U, G];
 		List<Nucleotide> mrna = codon;
 
-		while (! stop(codon)) {
+		/*
+        while (! stop(codon)) {
 		    // Add random codon to mrna strand
 		    codon = list[nuc(), nuc(), nuc()];
 		    mrna = concatenate(mrna, codon);
 		}
+        */
+        Int i = 0;
+        while (i < len) {
+		    // Add random codon to mrna strand
+		    codon = list[nuc(), nuc(), nuc()];
+		    mrna = concatenate(mrna, codon);
+            i = i+1;
+		}
+
+        // end with a stop codon
+        List<Nucleotide> stopcodon = Cons(U, Cons(A, Cons(A, Nil)));
+        mrna = concatenate(mrna, stopcodon);
         return new Mrna(mrna);
 
         //println(toString(mrna));

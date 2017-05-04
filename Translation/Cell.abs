@@ -78,12 +78,13 @@ class Cell implements Cell {
     // Start degradation
     // Prot -> 0, rate
     // mRNA -> 0, rate
-    Degradation pd = new ProteinDegradation(cell, 1);
+    //Degradation pd = new ProteinDegradation(cell, 1);
     //Degradation md = new MrnaDegradation(cell, 1);
 
 
     // Initial populations
-    Int pop_rib = 100;
+    // Translation of proteins in E. coli is carried out by ≈10,000-100,000 ribosomes
+    Int pop_rib = 10000;
 
     /*
      * Populate cell with ribosomes

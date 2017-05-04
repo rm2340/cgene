@@ -23,7 +23,6 @@ def Bool stop(List<Nucleotide> codon) =
         _ => false;
     };
 */
-
 def Bool stop(List<Nucleotide> codon) =
     case codon {
         Cons(U, Cons(A, Cons(A, Nil))) => True;
@@ -34,10 +33,11 @@ def Bool stop(List<Nucleotide> codon) =
 
 
 interface Mrna {
-    Bool attach(Ribosome rib);
+    Int attach(Ribosome rib);
     Unit detach(Ribosome rib, Int pos);
     Unit advance(Ribosome rib, Int pos);
     List<Nucleotide> readCodon(Int pos);
+    Nucleotide readNucleotide(Int pos);
     String toString();
 }
 
@@ -57,13 +57,17 @@ class Mrna(List<Nucleotide> mrna) implements Mrna {
     }
 
 
-    // Attach ribosome at the start of the strand (position 0)
-    Bool attach(Ribosome rib) {
-        Bool success = False;
-        if (lookupUnsafe(occupancy, 0) == Nothing) {
-            occupancy = put(occupancy, 0, Just(rib));
-            success = True;
-            //println("Ribosome attached to mRNA");
+    /* Attach ribosome at random position in the strand
+     * Return position where ribosome attached
+     * or -1 if it failed to attach
+     */
+    Int attach(Ribosome rib) {
+        Int success = -1;
+        Int pos = random(length(mrna));
+        if (lookupUnsafe(occupancy, pos) == Nothing) {
+            occupancy = put(occupancy, pos, Just(rib));
+            success = pos;
+            println("Ribosome attached to mRNA at pos " + toString(pos));
         }
         return success;
     }
@@ -75,19 +79,22 @@ class Mrna(List<Nucleotide> mrna) implements Mrna {
         // clear pos
         occupancy = put(occupancy, pos, Nothing);
         //println("Ribosome detached from mRNA");
+
+        // decoding the entire mrna takes 1, regadless of how long it is
+        // TODO let decoding each codon have certain duration
         duration(1,1);
     }
 
-    // Move the Ribosome rib from position pos to pos+3 (one codon further)
+    // Move the Ribosome rib from position pos to pos+1 (one nucleotide further)
     Unit advance(Ribosome rib, Int pos) {
         //wait until next position is free
-        await(lookupUnsafe(occupancy, pos+3) == Nothing);
+        await(lookupUnsafe(occupancy, pos+1) == Nothing);
 
         // clear current pos & move rib to next pos
-        occupancy = put(put(occupancy, pos, Nothing), pos+3, Just(rib));
+        occupancy = put(put(occupancy, pos, Nothing), pos+1, Just(rib));
 
-        String s = this.occupancyToString();
-        println("Occupancy: " + s);
+        //String s = this.occupancyToString();
+        //println("Occupancy: " + s);
     }
 
     // Read codon at position pos
@@ -95,6 +102,11 @@ class Mrna(List<Nucleotide> mrna) implements Mrna {
         List<Nucleotide> codon = list[nth(mrna, pos), nth(mrna, pos+1), nth(mrna, pos+2)];
         return codon;
     }
+
+    Nucleotide readNucleotide(Int pos) {
+        return nth(mrna, pos);
+    }
+
 
     String toString() {
         return toString(mrna);

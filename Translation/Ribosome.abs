@@ -14,6 +14,8 @@ interface Ribosome {
  */
 class Ribosome(Cell cell) implements Ribosome {
 
+    Int position = -1; // The ribosome's current position on the mRNA strand
+
     Unit run() {
         while (True) {
             /* Try to obtain mRNA; if successful,
@@ -22,9 +24,10 @@ class Ribosome(Cell cell) implements Ribosome {
              *     detach upon encountering stop codon
              */
             Mrna mrna = await cell!obtainMrna();
-            Bool attached = await mrna!attach(this);
-            if (attached) {
+            position = await mrna!attach(this);
+            if (position >= 0) {
                 this.decode(mrna);
+                println("Start decoding mrna");
             } else {
                 //println("Ribosome failed to attach to mRNA");
             }
@@ -33,18 +36,19 @@ class Ribosome(Cell cell) implements Ribosome {
 
     Unit decode(Mrna mrna) {
         Protein prot = new Protein();
-        await cell!addProtein(prot);
 
-        Int pos = 0;
         List<Nucleotide> codon = list[];
 
         Bool stop = False;
+        assert position >= 0;
         while(!stop) {
             // read codon
-            codon = await mrna!readCodon(pos);
+            codon = this.readCodon(mrna);
             if (stop(codon)) {
                 stop = True;
-                await mrna!detach(this, pos);
+                await mrna!detach(this, position);
+                println("Stop decoding mrna");
+                await cell!addProtein(prot);
             } else {
                 //print("Codon: " + toString(codon));
                 Nucleotide n1 = nth(codon, 0);
@@ -57,15 +61,21 @@ class Ribosome(Cell cell) implements Ribosome {
                 // on average, mrna strand has 64/3=21 nucleotides...
                 // very crude way to say that decoding the entire mrna should take 1 time unit
                 // duration(3/64, 3/64);
-
-                // advance
-                await mrna!advance(this, pos);
-                pos = pos + 3;
+                // but currently we have a fixed duration for deconding any mrna (see Mrna.detach)
             }
         }
-        // or just say deconding the entire mrna takes 1 t, regadless of how long it is
-        duration(1,1);
+    }
 
+    List<Nucleotide> readCodon(Mrna mrna) {
+        List<Nucleotide> codon = list[];
+        Int i = 0;
+        while (i < 3) {
+            Nucleotide n = await mrna!readNucleotide(position);
+            appendright(codon, n);
+            await mrna!advance(this, position);
+            position = position + 1;
+        }
+        return codon;
     }
 
 }
