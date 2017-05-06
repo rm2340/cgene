@@ -17,9 +17,9 @@ class Transcription(Cell cell, Int rate) implements Transcription {
 
     Unit run() {
         //while(True) {
-            Mrna mrna = this.genMRNA(1000000);
+            Mrna mrna = this.genMRNA(1000);
             await cell!addMRNA(mrna);
-            duration(1/rate, 1/rate);
+            //duration(1/rate, 1/rate);
         //}
     }
 
@@ -27,31 +27,27 @@ class Transcription(Cell cell, Int rate) implements Transcription {
      * Generate random mRNA molecule of length len codons
      */
     Mrna genMRNA(Int len) {
-        // Start list with a start codon
-		List<Nucleotide> codon = list[A, U, G];
-		List<Nucleotide> mrna = codon;
+        // We build the list starting from the end (more efficient)
+        // first, a stop codon
+        List<Nucleotide> code = list[U, A, A];
 
-		/*
-        while (! stop(codon)) {
-		    // Add random codon to mrna strand
-		    codon = list[nuc(), nuc(), nuc()];
-		    mrna = concatenate(mrna, codon);
-		}
-        */
         Int i = 0;
-        while (i < len) {
-		    // Add random codon to mrna strand
-		    codon = list[nuc(), nuc(), nuc()];
-		    mrna = concatenate(mrna, codon);
-            i = i+1;
-		}
+        while (i < len*3) {
+            // Add 3 random nucleotides (a codon) to mrna strand
+            code = Cons(nuc(), code);
+            code = Cons(nuc(), code);
+            code = Cons(nuc(), code);
+            i = i+3;
+        }
 
-        // end with a stop codon
-        List<Nucleotide> stopcodon = Cons(U, Cons(A, Cons(A, Nil)));
-        mrna = concatenate(mrna, stopcodon);
-        return new Mrna(mrna);
+        // lastly, a start codon (A,U,G)
+        code = Cons(G, code);
+        code = Cons(U, code);
+        code = Cons(A, code);
 
-        //println(toString(mrna));
+        assert length(code) == 3*(len+2);
+        println("mRNA list generated, length=" + toString(length(code)));
+        return new Mrna(code);
     }
 
 }

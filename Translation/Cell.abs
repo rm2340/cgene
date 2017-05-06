@@ -10,6 +10,7 @@ import * from Degradation;
 interface Cell {
     Unit addMRNA(Mrna mrna);
     Unit addRibosome(Ribosome ribo);
+    Protein newProtein();
     Unit addProtein(Protein prot);
     Mrna obtainMrna();
 
@@ -26,16 +27,22 @@ class Cell implements Cell {
 
     Unit addMRNA(Mrna mrna) {
         mrnaStrands = appendright(mrnaStrands, mrna);
-        //println(toString(length(mrnaStrands)));
     }
 
     Unit addRibosome(Ribosome ribo) {
         ribosomes = insertElement(ribosomes, ribo);
     }
 
+    Protein newProtein() {
+        return new local Protein();
+    }
+
     Unit addProtein(Protein prot) {
-        proteins = insertElement(proteins, prot);
-        println("Proteins: " + toString(size(proteins)));
+        Int l = prot.getLength();
+        if (l > 0) {
+            proteins = insertElement(proteins, prot);
+            println("Add Protein l=" + toString(l) + "; total=" + toString(size(proteins)));
+        }
     }
 
     Int getQuantProtein() {
@@ -71,6 +78,7 @@ class Cell implements Cell {
 {
     Cell cell = new local Cell();
 
+
     // Start mRNA transcription
     // 0 -> mRNA, rate
     Transcription ts = new Transcription(cell, 50);
@@ -83,8 +91,8 @@ class Cell implements Cell {
 
 
     // Initial populations
-    // Translation of proteins in E. coli is carried out by ≈10,000-100,000 ribosomes
-    Int pop_rib = 10000;
+    // Translation of proteins in E. coli is carried out by ~10,000-100,000 ribosomes
+    Int pop_rib = 1;
 
     /*
      * Populate cell with ribosomes
