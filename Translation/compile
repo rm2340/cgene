@@ -1,0 +1,4 @@
+#!/bin/bash
+
+rm -rf gen/erlang
+java -jar ./lib/absfrontend.jar -v -erlang *.abs -d gen/erlang/

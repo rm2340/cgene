@@ -58,7 +58,7 @@ class Ribosome(Cell cell) implements Ribosome {
                 await prot!add(aa);
                 duration(1/12, 1/21); // Rate of translation by the ribosome [http://bionumbers.hms.harvard.edu/bionumber.aspx?id=100059]
             }
-        }
+         }
     }
 
     List<Nucleotide> readCodon(Mrna mrna) {
