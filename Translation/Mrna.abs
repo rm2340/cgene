@@ -33,9 +33,9 @@ def Bool stop(List<Nucleotide> codon) =
 
 
 interface Mrna {
-    Int attach(Ribosome rib);
+    Bool attach(Ribosome rib);
     Unit detach(Ribosome rib, Int pos);
-    Unit advance(Ribosome rib, Int pos);
+    Int advance(Ribosome rib, Int pos);
     List<Nucleotide> readCodon(Int pos);
     Nucleotide readNucleotide(Int pos);
     String toString();
@@ -56,18 +56,21 @@ class Mrna(List<Nucleotide> code) implements Mrna {
         }
     }
 
+    /*
+    recover {
+        _ => println("************");
+    }
+    */
 
-    /* Attach ribosome at random position in the strand
-     * Return position where ribosome attached
-     * or -1 if it failed to attach
+    /* Attach ribosome at beginning of the strand
+     * Return True if ribosome attached, else False
      */
-    Int attach(Ribosome rib) {
-        Int success = -1;
-        Int pos = random(length(code));
-        if (lookupUnsafe(occupancy, pos) == Nothing) {
-            occupancy = put(occupancy, pos, Just(rib));
-            success = pos;
-            println("Ribosome attached to mRNA at pos " + toString(pos));
+    Bool attach(Ribosome rib) {
+        Bool success = False;
+        if (lookupUnsafe(occupancy, 0) == Nothing) {
+            occupancy = put(occupancy, 0, Just(rib));
+            success = True;
+            //println("Ribosome attached to mRNA");
         }
         return success;
     }
@@ -86,9 +89,10 @@ class Mrna(List<Nucleotide> code) implements Mrna {
     }
 
     // Move the Ribosome rib from position pos to pos+1 (one nucleotide further)
-    Unit advance(Ribosome rib, Int pos) {
+    Int advance(Ribosome rib, Int pos) {
         assert pos < length(code) - 1;
         //wait until next position is free
+        println("waiting before pos " + toString(pos+1));
         await(lookupUnsafe(occupancy, pos+1) == Nothing);
 
         // clear current pos & move rib to next pos
@@ -96,6 +100,7 @@ class Mrna(List<Nucleotide> code) implements Mrna {
 
         //String s = this.occupancyToString();
         //println("Occupancy: " + s);
+        return pos+1;
     }
 
     // Read codon at position pos

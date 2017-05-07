@@ -24,9 +24,10 @@ class Ribosome(Cell cell) implements Ribosome {
              *     detach upon encountering stop codon
              */
             Mrna mrna = await cell!obtainMrna();
-            position = await mrna!attach(this);
-            if (position >= 0) {
-                //println("Start decoding mrna");
+            Bool attached = await mrna!attach(this);
+            position = 0;
+            if (attached) {
+                println("Ribosome starts decoding mrna");
                 this.decode(mrna);
             } else {
                 //println("Ribosome failed to attach to mRNA");
@@ -35,41 +36,46 @@ class Ribosome(Cell cell) implements Ribosome {
     }
 
     Unit decode(Mrna mrna) {
-        assert position >= 0;
+        assert position == 0;
         Protein prot = await cell!newProtein();
         Bool stop = False;
         while(!stop) {
             // read codon
+            println("position: " + toString(position));
             List<Nucleotide> codon = this.readCodon(mrna);
             if (stop(codon)) {
                 stop = True;
+                println("Ribosome stops decoding mrna; at pos " + toString(position));
                 await mrna!detach(this, position);
                 //println("Stop decoding mrna");
                 await cell!addProtein(prot);
             } else {
-                //print("Codon: " + toString(codon));
-                Aminoacid aa = aminoacid(nth(codon, 0), nth(codon, 1), nth(codon, 2));
-                //println("  --> Aminoacid: " + toString(aa));
-                await prot!add(aa);
-
                 // Since not a stop codon, assume another codon is following
-                await mrna!advance(this, position);
-                position = position + 1;
-
-                duration(1/20, 1/20); // Rate of translation by the ribosome: ~20 aa/sec
+                position = await mrna!advance(this, position);
+                print("Codon: " + toString(codon));
+                Aminoacid aa = aminoacid(nth(codon, 0), nth(codon, 1), nth(codon, 2));
+                println("  --> Aminoacid: " + toString(aa));
+                await prot!add(aa);
+                duration(1/12, 1/21); // Rate of translation by the ribosome [http://bionumbers.hms.harvard.edu/bionumber.aspx?id=100059]
             }
         }
     }
 
     List<Nucleotide> readCodon(Mrna mrna) {
-        assert position >= 0;
         List<Nucleotide> codon = list[];
-        Int i = 0;
-        while (i < 3) {
-            Nucleotide n = await mrna!readNucleotide(position + i);
-            codon = appendright(codon, n);
-            i = i + 1;
-        }
+        // #1
+        Nucleotide n = await mrna!readNucleotide(position);
+        codon = appendright(codon, n);
+        position = await mrna!advance(this, position);
+        // #2
+        n = await mrna!readNucleotide(position);
+        codon = appendright(codon, n);
+        position = await mrna!advance(this, position);
+        // #3
+        n = await mrna!readNucleotide(position);
+        codon = appendright(codon, n);
+        // do not advance, until we know what we just read was not a stop codon
+
         assert length(codon) == 3;
         return codon;
     }

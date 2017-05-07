@@ -34,10 +34,15 @@ class Transcription(Cell cell, Int rate) implements Transcription {
         Int i = 0;
         while (i < len*3) {
             // Add 3 random nucleotides (a codon) to mrna strand
-            code = Cons(nuc(), code);
-            code = Cons(nuc(), code);
-            code = Cons(nuc(), code);
-            i = i+3;
+            Nucleotide n1 = nuc();
+            Nucleotide n2 = nuc();
+            Nucleotide n3 = nuc();
+            if (!stop(list[n1,n2,n3])) { // don't want any stop codons
+                code = Cons(n1, code);
+                code = Cons(n2, code);
+                code = Cons(n3, code);
+                i = i+3;
+            }
         }
 
         // lastly, a start codon (A,U,G)

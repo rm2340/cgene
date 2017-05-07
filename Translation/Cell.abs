@@ -25,6 +25,9 @@ class Cell implements Cell {
     Set<Ribosome> ribosomes = set[];
     Set<Protein> proteins = set[];
 
+    // Keep track of number of synthesized aa
+    Int aminoacids = 0;
+
     Unit addMRNA(Mrna mrna) {
         mrnaStrands = appendright(mrnaStrands, mrna);
     }
@@ -41,7 +44,8 @@ class Cell implements Cell {
         Int l = prot.getLength();
         if (l > 0) {
             proteins = insertElement(proteins, prot);
-            println("Add Protein l=" + toString(l) + "; total=" + toString(size(proteins)));
+            aminoacids = aminoacids + l;
+            println("Add Protein l=" + toString(l) + "; aa total=" + toString(aminoacids));
         }
     }
 
@@ -92,7 +96,7 @@ class Cell implements Cell {
 
     // Initial populations
     // Translation of proteins in E. coli is carried out by ~10,000-100,000 ribosomes
-    Int pop_rib = 1;
+    Int pop_rib = 10;
 
     /*
      * Populate cell with ribosomes
