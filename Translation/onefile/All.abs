@@ -1,0 +1,521 @@
+module Cell;
+export Cell;
+import * from Transcription;
+import * from Mrna;
+import * from Ribosome;
+import * from Protein;
+import * from Degradation;
+
+
+interface Cell {
+    Unit addMRNA(Mrna mrna);
+    Unit addRibosome(Ribosome ribo);
+    Protein newProtein();
+    Unit addProtein(Protein prot);
+    Mrna obtainMrna();
+
+    Int getQuantProtein();
+    Unit degradeProtein();
+    Int getQuantMrna();
+    Unit degradeMrna();
+}
+
+class Cell implements Cell {
+    List<Mrna> mrnaStrands = list[];
+    Set<Ribosome> ribosomes = set[];
+    Set<Protein> proteins = set[];
+
+    // Keep track of number of synthesized aa
+    Int aminoacids = 0;
+
+    Unit addMRNA(Mrna mrna) {
+        mrnaStrands = appendright(mrnaStrands, mrna);
+    }
+
+    Unit addRibosome(Ribosome ribo) {
+        ribosomes = insertElement(ribosomes, ribo);
+    }
+
+    Protein newProtein() {
+        return new local Protein();
+    }
+
+    Unit addProtein(Protein prot) {
+        Int l = prot.getLength();
+        if (l > 0) {
+            proteins = insertElement(proteins, prot);
+            aminoacids = aminoacids + l;
+            println("Add Protein l=" + toString(l) + "; aa total=" + toString(aminoacids));
+        }
+    }
+
+    Int getQuantProtein() {
+        return size(proteins);
+    }
+    Unit degradeProtein() {
+        assert size(proteins) > 0;
+        Protein p = take(proteins);
+        proteins = remove(proteins, p);
+    }
+    Int getQuantMrna() {
+        return length(mrnaStrands);
+    }
+    Unit degradeMrna() {
+        assert length(mrnaStrands) > 0;
+        mrnaStrands = tail(mrnaStrands);
+    }
+
+    // Randomly return one of the mRNA strands for decoding
+    Mrna obtainMrna() {
+        await length(mrnaStrands) > 0;
+        Int n = random(length(mrnaStrands));
+        Mrna mrna = nth(mrnaStrands, n);
+        //String s = await mrna!toString();
+        //println("Cell: offering mRNA: " + s);
+        return mrna;
+    }
+}
+
+
+/* Main block */
+
+{
+    Cell cell = new local Cell();
+
+
+    // Start mRNA transcription
+    // 0 -> mRNA, rate
+    Transcription ts = new Transcription(cell, 50);
+
+    // Start degradation
+    // Prot -> 0, rate
+    // mRNA -> 0, rate
+    //Degradation pd = new ProteinDegradation(cell, 1);
+    //Degradation md = new MrnaDegradation(cell, 1);
+
+
+    // Initial populations
+    // Translation of proteins in E. coli is carried out by ~10,000-100,000 ribosomes
+    Int pop_rib = 10;
+
+    /*
+     * Populate cell with ribosomes
+     */
+    Int i = 0;
+    while (i < pop_rib) {
+        Ribosome ribo = new Ribosome(cell);
+        cell.addRibosome(ribo);
+        i = i + 1;
+    }
+
+}
+module Degradation;
+export *;
+import * from Cell;
+
+
+interface Degradation {
+    Unit run();
+}
+
+class ProteinDegradation (Cell cell, Int rate) implements Degradation {
+    Unit run() {
+        while (True) {
+            Int quantity = await cell!getQuantProtein();
+            if (quantity > 0) {
+                Rat d = 1 / (rate * quantity);
+                duration(d, d);
+                await cell!degradeProtein();
+            }
+        }
+    }
+
+}
+
+class MrnaDegradation (Cell cell, Int rate) implements Degradation {
+    Unit run() {
+        while (True) {
+            Int quantity = await cell!getQuantMrna();
+            if (quantity > 0) {
+                Rat d = 1 / (rate * quantity);
+                duration(d, d);
+                await cell!degradeMrna();
+            }
+        }
+    }
+
+}
+module Mrna;
+export Mrna, Nucleotide, A, C, G, U, nuc, stop;
+import * from Ribosome;
+
+// adenine, cytosine, guanine, uracil
+data Nucleotide = A | C | G | U;
+
+def Nucleotide nuc() =
+    case random(4) {
+        0 => A;
+        1 => C;
+        2 => G;
+        3 => U;
+    };
+
+
+/* // Would be nice if this would work...
+def Bool stop(List<Nucleotide> codon) =
+    case codon {
+        list[U, A, A] => true;
+        list[U, A, G] => true;
+        list[U, G, A] => true;
+        _ => false;
+    };
+*/
+def Bool stop(List<Nucleotide> codon) =
+    case codon {
+        Cons(U, Cons(A, Cons(A, Nil))) => True;
+        Cons(U, Cons(A, Cons(G, Nil))) => True;
+        Cons(U, Cons(G, Cons(A, Nil))) => True;
+        _ => False;
+    };
+
+
+interface Mrna {
+    Bool attach(Ribosome rib);
+    Unit detach(Ribosome rib, Int pos);
+    Int advance(Ribosome rib, Int pos);
+    List<Nucleotide> readCodon(Int pos);
+    Nucleotide readNucleotide(Int pos);
+    String toString();
+}
+
+class Mrna(List<Nucleotide> code) implements Mrna {
+
+    // This map remembers the positions of ribosomes in the mRNA strand
+    // Only one ribosome can be at a certain position
+    Map<Int, Maybe<Ribosome>> occupancy = map[];
+
+    // init block (constructor)
+    {
+        Int i = 0;
+        while(i < length(code)) {
+            occupancy = put(occupancy, i, Nothing);
+            i = i + 1;
+        }
+    }
+
+    /*
+    recover {
+        _ => println("************");
+    }
+    */
+
+    /* Attach ribosome at beginning of the strand
+     * Return True if ribosome attached, else False
+     */
+    Bool attach(Ribosome rib) {
+        Bool success = False;
+        if (lookupUnsafe(occupancy, 0) == Nothing) {
+            occupancy = put(occupancy, 0, Just(rib));
+            success = True;
+            //println("Ribosome attached to mRNA");
+        }
+        return success;
+    }
+
+    Unit detach(Ribosome rib, Int pos) {
+        // assume rib is indeed at pos
+        assert lookupUnsafe(occupancy, pos) == Just(rib);
+
+        // clear pos
+        occupancy = put(occupancy, pos, Nothing);
+        //println("Ribosome detached from mRNA");
+
+        // decoding the entire mrna takes 1, regadless of how long it is
+        // TODO let decoding each codon have certain duration
+        //duration(1,1);
+    }
+
+    // Move the Ribosome rib from position pos to pos+1 (one nucleotide further)
+    Int advance(Ribosome rib, Int pos) {
+        assert pos < length(code) - 1;
+        //wait until next position is free
+        println("waiting before pos " + toString(pos+1));
+        await(lookupUnsafe(occupancy, pos+1) == Nothing);
+
+        // clear current pos & move rib to next pos
+        occupancy = put(put(occupancy, pos, Nothing), pos+1, Just(rib));
+
+        //String s = this.occupancyToString();
+        //println("Occupancy: " + s);
+        return pos+1;
+    }
+
+    // Read codon at position pos
+    List<Nucleotide> readCodon(Int pos) {
+        List<Nucleotide> codon = list[nth(code, pos), nth(code, pos+1), nth(code, pos+2)];
+        return codon;
+    }
+
+    Nucleotide readNucleotide(Int pos) {
+        assert pos < length(code);
+        return nth(code, pos);
+    }
+
+
+    String toString() {
+        return toString(code);
+    }
+    String occupancyToString() {
+        String res = "";
+        Int i = 0;
+        while(i < size(keys(occupancy))) {
+            if (lookupUnsafe(occupancy, i) == Nothing)
+                res = res + "- ";
+            else
+                res = res + "* ";
+            i = i + 1;
+        }
+        return res;
+    }
+
+}
+module Protein;
+export *;
+
+// There are 20
+data Aminoacid =
+    Ala | Arg | Asn | Asp | Cys |
+    Gln | Glu | Gly | His | Ile |
+    Leu | Lys | Met | Phe | Pro |
+    Ser | Thr | Trp | Tyr | Val | Stp;
+
+
+interface Protein {
+    Unit add(Aminoacid a);
+    Int getLength();
+}
+
+// A protein is a chain (list) of amino acids
+class Protein implements Protein {
+    List<Aminoacid> chain = list[];
+
+    Unit add(Aminoacid a) {
+        chain = appendright(chain, a);
+    }
+
+    Int getLength() {
+        return length(chain);
+    }
+}
+module Ribosome;
+export Ribosome;
+import * from Mrna;
+import * from Cell;
+import * from Protein;
+
+interface Ribosome {
+    Unit run();
+}
+
+
+/* Model of a ribosome
+ * synthesizing protein from mRNA
+ */
+class Ribosome(Cell cell) implements Ribosome {
+
+    Int position = -1; // The ribosome's current position on the mRNA strand
+
+    Unit run() {
+        while (True) {
+            /* Try to obtain mRNA; if successful,
+             *     attach to mRNA,
+             *     decode mRNA (ste by step),
+             *     detach upon encountering stop codon
+             */
+            Mrna mrna = await cell!obtainMrna();
+            Bool attached = await mrna!attach(this);
+            position = 0;
+            if (attached) {
+                println("Ribosome starts decoding mrna");
+                this.decode(mrna);
+            } else {
+                //println("Ribosome failed to attach to mRNA");
+            }
+        }
+    }
+
+    Unit decode(Mrna mrna) {
+        assert position == 0;
+        Protein prot = await cell!newProtein();
+        Bool stop = False;
+        while(!stop) {
+            // read codon
+            println("position: " + toString(position));
+            List<Nucleotide> codon = this.readCodon(mrna);
+            if (stop(codon)) {
+                stop = True;
+                println("Ribosome stops decoding mrna; at pos " + toString(position));
+                await mrna!detach(this, position);
+                //println("Stop decoding mrna");
+                await cell!addProtein(prot);
+            } else {
+                // Since not a stop codon, assume another codon is following
+                position = await mrna!advance(this, position);
+                print("Codon: " + toString(codon));
+                Aminoacid aa = aminoacid(nth(codon, 0), nth(codon, 1), nth(codon, 2));
+                println("  --> Aminoacid: " + toString(aa));
+                await prot!add(aa);
+                duration(1/12, 1/21); // Rate of translation by the ribosome [http://bionumbers.hms.harvard.edu/bionumber.aspx?id=100059]
+            }
+         }
+    }
+
+    List<Nucleotide> readCodon(Mrna mrna) {
+        List<Nucleotide> codon = list[];
+        // #1
+        Nucleotide n = await mrna!readNucleotide(position);
+        codon = appendright(codon, n);
+        position = await mrna!advance(this, position);
+        // #2
+        n = await mrna!readNucleotide(position);
+        codon = appendright(codon, n);
+        position = await mrna!advance(this, position);
+        // #3
+        n = await mrna!readNucleotide(position);
+        codon = appendright(codon, n);
+        // do not advance, until we know what we just read was not a stop codon
+
+        assert length(codon) == 3;
+        return codon;
+    }
+
+}
+
+
+// decode codon into specific amino acid
+def Aminoacid aminoacid(Nucleotide n1, Nucleotide n2, Nucleotide n3) =
+    case n1 {
+        U => case n2 {
+            U => case n3 {
+                U => Phe;
+                C => Phe;
+                A => Leu;
+                G => Leu;
+            };
+            C => Ser;
+            A => case n3 {
+                U => Tyr;
+                C => Tyr;
+                A => Stp;
+                G => Stp;
+            };
+            G => case n3 {
+                U => Cys;
+                C => Cys;
+                A => Stp;
+                G => Trp;
+            };
+        };
+        C => case n2 {
+            U => Leu;
+            C => Pro;
+            A => case n3 {
+                U => His;
+                C => His;
+                A => Gln;
+                G => Gln;
+            };
+            G => Arg;
+        };
+        A => case n2 {
+            U => case n3 {
+                U => Ile;
+                C => Ile;
+                A => Ile;
+                G => Met;
+            };
+            C => Thr;
+            A => case n3 {
+                U => Asn;
+                C => Asn;
+                A => Lys;
+                G => Lys;
+            };
+            G => case n3 {
+                U => Ser;
+                C => Ser;
+                A => Arg;
+                G => Arg;
+            };
+        };
+        G => case n2 {
+            U => Val;
+            C => Ala;
+            A => case n3 {
+                U => Asp;
+                C => Asp;
+                A => Glu;
+                G => Glu;
+            };
+            G => Gly;
+        };
+    };
+/* This very abstractly simulates transcription,
+ * by generating random mRNA strands.
+ * Corresponds to reaction: 0 -> mRNA (constant rate)
+ */
+module Transcription;
+export Transcription;
+import * from Mrna;
+import * from Cell;
+
+
+interface Transcription {
+    Unit run();
+    Mrna genMRNA(Int len);
+}
+
+class Transcription(Cell cell, Int rate) implements Transcription {
+
+    Unit run() {
+        //while(True) {
+            Mrna mrna = this.genMRNA(1000);
+            await cell!addMRNA(mrna);
+            //duration(1/rate, 1/rate);
+        //}
+    }
+
+    /*
+     * Generate random mRNA molecule of length len codons
+     */
+    Mrna genMRNA(Int len) {
+        // We build the list starting from the end (more efficient)
+        // first, a stop codon
+        List<Nucleotide> code = list[U, A, A];
+
+        Int i = 0;
+        while (i < len*3) {
+            // Add 3 random nucleotides (a codon) to mrna strand
+            Nucleotide n1 = nuc();
+            Nucleotide n2 = nuc();
+            Nucleotide n3 = nuc();
+            if (!stop(list[n1,n2,n3])) { // don't want any stop codons
+                code = Cons(n1, code);
+                code = Cons(n2, code);
+                code = Cons(n3, code);
+                i = i+3;
+            }
+        }
+
+        // lastly, a start codon (A,U,G)
+        code = Cons(G, code);
+        code = Cons(U, code);
+        code = Cons(A, code);
+
+        assert length(code) == 3*(len+2);
+        println("mRNA list generated, length=" + toString(length(code)));
+        return new Mrna(code);
+    }
+
+}
+
