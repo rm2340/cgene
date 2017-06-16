@@ -1,5 +1,5 @@
 module Mrna;
-export Mrna, Nucleotide, A, C, G, U, nuc, stop;
+export Mrna, Nucleotide, A, C, G, U, nuc, start, stop;
 import * from Ribosome;
 
 // adenine, cytosine, guanine, uracil
@@ -23,6 +23,12 @@ def Bool stop(List<Nucleotide> codon) =
         _ => false;
     };
 */
+def Bool start(List<Nucleotide> codon) =
+    case codon {
+        Cons(A, Cons(U, Cons(G, Nil))) => True;
+        _ => False;
+    };
+
 def Bool stop(List<Nucleotide> codon) =
     case codon {
         Cons(U, Cons(A, Cons(A, Nil))) => True;
@@ -92,7 +98,7 @@ class Mrna(List<Nucleotide> code) implements Mrna {
     Int advance(Ribosome rib, Int pos) {
         assert pos < length(code) - 1;
         //wait until next position is free
-        println("waiting before pos " + toString(pos+1));
+        //println("waiting before pos " + toString(pos+1));
         await(lookupUnsafe(occupancy, pos+1) == Nothing);
 
         // clear current pos & move rib to next pos

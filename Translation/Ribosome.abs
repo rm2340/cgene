@@ -27,7 +27,6 @@ class Ribosome(Cell cell) implements Ribosome {
             Bool attached = await mrna!attach(this);
             position = 0;
             if (attached) {
-                println("Ribosome starts decoding mrna");
                 this.decode(mrna);
             } else {
                 //println("Ribosome failed to attach to mRNA");
@@ -37,11 +36,21 @@ class Ribosome(Cell cell) implements Ribosome {
 
     Unit decode(Mrna mrna) {
         assert position == 0;
+        Bool start = False;
+        while(!start) {
+            // read codon
+            //println("position: " + toString(position));
+            List<Nucleotide> codon = this.readCodon(mrna);
+            if (start(codon)) {
+                println("Ribosome starts decoding mrna at pos " + toString(position));
+                start = True;
+            }
+        }
         Protein prot = await cell!newProtein();
         Bool stop = False;
         while(!stop) {
             // read codon
-            println("position: " + toString(position));
+            //println("position: " + toString(position));
             List<Nucleotide> codon = this.readCodon(mrna);
             if (stop(codon)) {
                 stop = True;
