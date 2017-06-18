@@ -1,0 +1,25 @@
+module Logger;
+export Logger, CellResourcesLogger;
+import * from Cell;
+
+interface Logger {
+    Unit run();
+}
+
+class CellResourcesLogger(Cell cell) implements Logger {
+
+    Unit run() {
+        this.log();
+    }
+
+    Unit log() {
+        while(True) {
+            Time t = now();
+            Int mrna = await cell!getQuantMrna();
+            Int prot = await cell!getQuantProtein();
+            Int ribo = await cell!getQuantRibosomes();
+            println("QUANT " + toString(t) + " mRNA " + toString(mrna) + " Protein " + toString(prot) + " Ribosomes " + toString(ribo));
+            duration(1/100, 1/100); // log interval - adjust as needed
+        }
+    }
+}

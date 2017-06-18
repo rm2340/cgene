@@ -5,6 +5,7 @@ import * from Mrna;
 import * from Ribosome;
 import * from Protein;
 import * from Degradation;
+import * from Logger;
 
 
 interface Cell {
@@ -15,8 +16,9 @@ interface Cell {
     Mrna obtainMrna();
 
     Int getQuantProtein();
-    Unit degradeProtein();
     Int getQuantMrna();
+    Int getQuantRibosomes();
+    Unit degradeProtein();
     Unit degradeMrna();
 }
 
@@ -65,6 +67,10 @@ class Cell implements Cell {
         mrnaStrands = tail(mrnaStrands);
     }
 
+    Int getQuantRibosomes() {
+        return size(ribosomes);
+    }
+
     // Randomly return one of the mRNA strands for decoding
     Mrna obtainMrna() {
         await length(mrnaStrands) > 0;
@@ -86,15 +92,17 @@ class Cell implements Cell {
     // Start mRNA transcription
     // 0 -> mRNA, rate
     Transcription ts1 = new TranscriptionURA3(cell, 50);
-    Transcription ts2 = new TranscriptionADH1(cell, 50);
-    Transcription ts3 = new TranscriptionRRP8(cell, 50);
+    Transcription ts2 = new TranscriptionADH1(cell, 10);
+    Transcription ts3 = new TranscriptionRRP8(cell, 5);
+
 
     // Start degradation
     // Prot -> 0, rate
     // mRNA -> 0, rate
     //Degradation pd = new ProteinDegradation(cell, 1);
-    //Degradation md = new MrnaDegradation(cell, 1);
+    //Degradation md = new MrnaDegradation(cell, 10);
 
+    Logger log = new CellResourcesLogger(cell);
 
     // Initial populations
     // Translation of proteins in E. coli is carried out by ~10,000-100,000 ribosomes
