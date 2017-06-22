@@ -1,5 +1,5 @@
 module Mrna;
-export Mrna, Nucleotide, A, C, G, U, nuc, start, stop;
+export Mrna, Nucleotide, A, C, G, U, nuc, stop;
 import * from Ribosome;
 
 // adenine, cytosine, guanine, uracil
@@ -23,11 +23,6 @@ def Bool stop(List<Nucleotide> codon) =
         _ => false;
     };
 */
-def Bool start(List<Nucleotide> codon) =
-    case codon {
-        Cons(A, Cons(U, Cons(G, Nil))) => True;
-        _ => False;
-    };
 
 def Bool stop(List<Nucleotide> codon) =
     case codon {

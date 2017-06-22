@@ -175,9 +175,9 @@ class TranscriptionRRP8(Cell cell, Int rate) implements Transcription {
     }
 }
 
-/*
-An error occurred during compilation:
-Cannot find modifier above TraitExpr in AST!
+
+//An error occurred during compilation:
+//Cannot find modifier above TraitExpr in AST!
 
 trait TranscriptionRun = {
     Unit run() {
@@ -189,5 +189,5 @@ trait TranscriptionRun = {
     }
 
 }
-*/
+
 

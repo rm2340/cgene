@@ -92,8 +92,8 @@ class Cell implements Cell {
     // Start mRNA transcription
     // 0 -> mRNA, rate
     Transcription ts1 = new TranscriptionURA3(cell, 50);
-    Transcription ts2 = new TranscriptionADH1(cell, 10);
-    Transcription ts3 = new TranscriptionRRP8(cell, 5);
+    //Transcription ts2 = new TranscriptionADH1(cell, 10);
+    //Transcription ts3 = new TranscriptionRRP8(cell, 5);
 
 
     // Start degradation
@@ -609,6 +609,7 @@ class TranscriptionURA3(Cell cell, Int rate) implements Transcription {
  * http://www.yeastgenome.org/locus/ADH1/overview
  * Chr 15 from 159472 to 160644 reverse complement
  */
+/*
 class TranscriptionADH1(Cell cell, Int rate) implements Transcription {
 
     Unit run() {
@@ -644,11 +645,13 @@ class TranscriptionADH1(Cell cell, Int rate) implements Transcription {
         return new Mrna(code);
     }
 }
+*/
 
 /* Nucleolar S-adenosylmethionine-dependent rRNA methyltransferase
  * http://www.yeastgenome.org/locus/S000002490/overview
  * Chr 4   from 612060 to 613366
  */
+/*
 class TranscriptionRRP8(Cell cell, Int rate) implements Transcription {
 
     Unit run() {
@@ -686,6 +689,7 @@ class TranscriptionRRP8(Cell cell, Int rate) implements Transcription {
         return new Mrna(code);
     }
 }
+*/
 
 /*
 An error occurred during compilation:

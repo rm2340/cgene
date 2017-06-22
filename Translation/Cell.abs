@@ -91,16 +91,16 @@ class Cell implements Cell {
 
     // Start mRNA transcription
     // 0 -> mRNA, rate
-    Transcription ts1 = new TranscriptionURA3(cell, 50);
-    Transcription ts2 = new TranscriptionADH1(cell, 10);
-    Transcription ts3 = new TranscriptionRRP8(cell, 5);
+    Transcription ts1 = new TranscriptionURA3(cell, 3);
+    Transcription ts2 = new TranscriptionADH1(cell, 2);
+    Transcription ts3 = new TranscriptionRRP8(cell, 1);
 
 
     // Start degradation
     // Prot -> 0, rate
     // mRNA -> 0, rate
-    //Degradation pd = new ProteinDegradation(cell, 1);
-    //Degradation md = new MrnaDegradation(cell, 10);
+    Degradation pd = new ProteinDegradation(cell, 1);
+    Degradation md = new MrnaDegradation(cell, 1);
 
     Logger log = new CellResourcesLogger(cell);
 

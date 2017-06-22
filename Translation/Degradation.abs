@@ -10,11 +10,12 @@ interface Degradation {
 class ProteinDegradation (Cell cell, Int rate) implements Degradation {
     Unit run() {
         while (True) {
+            duration(1/9999, 1/9999);
             Int quantity = await cell!getQuantProtein();
             if (quantity > 0) {
                 Rat d = 1 / (rate * quantity);
-                duration(d, d);
                 await cell!degradeProtein();
+                duration(d, d);
             }
         }
     }
@@ -27,8 +28,8 @@ class MrnaDegradation (Cell cell, Int rate) implements Degradation {
             Int quantity = await cell!getQuantMrna();
             if (quantity > 0) {
                 Rat d = 1 / (rate * quantity);
-                duration(d, d);
                 await cell!degradeMrna();
+                duration(d, d);
             }
         }
     }

@@ -20,13 +20,15 @@ class Ribosome(Cell cell) implements Ribosome {
         while (True) {
             /* Try to obtain mRNA; if successful,
              *     attach to mRNA,
-             *     decode mRNA (ste by step),
+             *     scan for start codon
+             *     decode mRNA (codon by codon),
              *     detach upon encountering stop codon
              */
             Mrna mrna = await cell!obtainMrna();
             Bool attached = await mrna!attach(this);
             position = 0;
             if (attached) {
+                this.scan(mrna);
                 this.decode(mrna);
             } else {
                 //println("Ribosome failed to attach to mRNA");
@@ -34,18 +36,29 @@ class Ribosome(Cell cell) implements Ribosome {
         }
     }
 
-    Unit decode(Mrna mrna) {
-        assert position == 0;
+    /* Look for the start codon
+     */
+    Unit scan(Mrna mrna) {
         Bool start = False;
-        while(!start) {
-            // read codon
-            //println("position: " + toString(position));
-            List<Nucleotide> codon = this.readCodon(mrna);
-            if (start(codon)) {
-                println("Ribosome starts decoding mrna at pos " + toString(position));
-                start = True;
+        while (!start) {
+            Nucleotide n = await mrna!readNucleotide(position);
+            position = await mrna!advance(this, position);
+            if (n == A) {
+                n = await mrna!readNucleotide(position);
+                position = await mrna!advance(this, position);
+                if (n == U) {
+                    n= await mrna!readNucleotide(position);
+                    position = await mrna!advance(this, position);
+                    if (n == G) {
+                        start = True;
+                    }
+                }
             }
         }
+    }
+
+    Unit decode(Mrna mrna) {
+        println("Ribosome starts decoding mrna at pos " + toString(position));
         Protein prot = await cell!newProtein();
         Bool stop = False;
         while(!stop) {
@@ -106,13 +119,13 @@ def Aminoacid aminoacid(Nucleotide n1, Nucleotide n2, Nucleotide n3) =
             A => case n3 {
                 U => Tyr;
                 C => Tyr;
-                A => Stp;
-                G => Stp;
+                //A => Stp;
+                //G => Stp;
             };
             G => case n3 {
                 U => Cys;
                 C => Cys;
-                A => Stp;
+                //A => Stp;
                 G => Trp;
             };
         };
