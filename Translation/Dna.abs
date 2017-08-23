@@ -1,0 +1,17 @@
+module Dna;
+export Gene, Nucleotide, A, C, G, U, nuc;
+
+
+data Gene = Gene(String id, List<Nucleotide> code);
+
+// adenine, cytosine, guanine, uracil
+data Nucleotide = A | C | G | U;
+
+def Nucleotide nuc() =
+    case random(4) {
+        0 => A;
+        1 => C;
+        2 => G;
+        3 => U;
+    };
+

@@ -1,17 +1,25 @@
 module Transcription;
-export Transcription, TranscriptionURA3,  TranscriptionADH1, TranscriptionRRP8;
+export Transcription;
+import * from Dna;
 import * from Mrna;
 import * from Cell;
 
 
 interface Transcription {
+    Unit start();
+    Unit stop();
+    Bool isOn();
+    Rat getRate();
     Unit run();
 }
 
 /* Abstract transcription simulation by generating random mRNA strands of given length.
  * Corresponds to reaction: 0 -> mRNA (constant rate)
  */
-class TranscriptionRandom(Cell cell, Int rate) implements Transcription {
+[Far]
+class TranscriptionRandom([Final] Cell cell, Rat rate) implements Transcription {
+    Bool run = True;
+    uses Control;
 
     Unit run() {
         while(True) {
@@ -50,143 +58,34 @@ class TranscriptionRandom(Cell cell, Int rate) implements Transcription {
 
         assert length(code) == 3*(len+2);
         println("mRNA list generated, length=" + toString(length(code)));
-        return new Mrna(code);
+        return new Mrna("Random", code);
     }
 
 }
 
 
-/*
- * URA3 is a gene on chromosome V in Saccharomyces cerevisiae (yeast)
- * http://www.yeastgenome.org/locus/S000000747/overview
- * Chr 5 from 116121 to 117051
- */
-class TranscriptionURA3(Cell cell, Int rate) implements Transcription {
+[Far]
+class Transcription(Gene gene, Cell cell, Rat rate) implements Transcription {
+    Bool run = True;
+    uses Control;
 
     Unit run() {
         while(True) {
-            Mrna mrna = this.genMRNA();
+            await this.run;
+            Mrna mrna = new Mrna(gene);
             await cell!addMRNA(mrna);
             duration(1/rate, 1/rate);
         }
+
     }
 
-    Mrna genMRNA() {
-        List<Nucleotide> code = list[
-            A,A,C,C,C,A,A,C,U,G,C,A,C,A,G,A,A,C,A,A,A,A,A,C,C,U,G,C,A,G,G,A,A,A,C,G,A,A,G,A,U,A,A,A,U,C,A,U,G,U,C,G,A,A,A,G,C,U,A,C,
-            A,U,A,U,A,A,G,G,A,A,C,G,U,G,C,U,G,C,U,A,C,U,C,A,U,C,C,U,A,G,U,C,C,U,G,U,U,G,C,U,G,C,C,A,A,G,C,U,A,U,U,U,A,A,U,A,U,C,A,U,
-            G,C,A,C,G,A,A,A,A,G,C,A,A,A,C,A,A,A,C,U,U,G,U,G,U,G,C,U,U,C,A,U,U,G,G,A,U,G,U,U,C,G,U,A,C,C,A,C,C,A,A,G,G,A,A,U,U,A,C,U,
-            G,G,A,G,U,U,A,G,U,U,G,A,A,G,C,A,U,U,A,G,G,U,C,C,C,A,A,A,A,U,U,U,G,U,U,U,A,C,U,A,A,A,A,A,C,A,C,A,U,G,U,G,G,A,U,A,U,C,U,U,
-            G,A,C,U,G,A,U,U,U,U,U,C,C,A,U,G,G,A,G,G,G,C,A,C,A,G,U,U,A,A,G,C,C,G,C,U,A,A,A,G,G,C,A,U,U,A,U,C,C,G,C,C,A,A,G,U,A,C,A,A,
-            U,U,U,U,U,U,A,C,U,C,U,U,C,G,A,A,G,A,C,A,G,A,A,A,A,U,U,U,G,C,U,G,A,C,A,U,U,G,G,U,A,A,U,A,C,A,G,U,C,A,A,A,U,U,G,C,A,G,U,A,
-            C,U,C,U,G,C,G,G,G,U,G,U,A,U,A,C,A,G,A,A,U,A,G,C,A,G,A,A,U,G,G,G,C,A,G,A,C,A,U,U,A,C,G,A,A,U,G,C,A,C,A,C,G,G,U,G,U,G,G,U,
-            G,G,G,C,C,C,A,G,G,U,A,U,U,G,U,U,A,G,C,G,G,U,U,U,G,A,A,G,C,A,G,G,C,G,G,C,G,G,A,A,G,A,A,G,U,A,A,C,A,A,A,G,G,A,A,C,C,U,A,G,
-            A,G,G,C,C,U,U,U,U,G,A,U,G,U,U,A,G,C,A,G,A,A,U,U,G,U,C,A,U,G,C,A,A,G,G,G,C,U,C,C,C,U,A,G,C,U,A,C,U,G,G,A,G,A,A,U,A,U,A,C,
-            U,A,A,G,G,G,U,A,C,U,G,U,U,G,A,C,A,U,U,G,C,G,A,A,G,A,G,C,G,A,C,A,A,A,G,A,U,U,U,U,G,U,U,A,U,C,G,G,C,U,U,U,A,U,U,G,C,U,C,A,
-            A,A,G,A,G,A,C,A,U,G,G,G,U,G,G,A,A,G,A,G,A,U,G,A,A,G,G,U,U,A,C,G,A,U,U,G,G,U,U,G,A,U,U,A,U,G,A,C,A,C,C,C,G,G,U,G,U,G,G,G,
-            U,U,U,A,G,A,U,G,A,C,A,A,G,G,G,A,G,A,C,G,C,A,U,U,G,G,G,U,C,A,A,C,A,G,U,A,U,A,G,A,A,C,C,G,U,G,G,A,U,G,A,U,G,U,G,G,U,C,U,C,
-            U,A,C,A,G,G,A,U,C,U,G,A,C,A,U,U,A,U,U,A,U,U,G,U,U,G,G,A,A,G,A,G,G,A,C,U,A,U,U,U,G,C,A,A,A,G,G,G,A,A,G,G,G,A,U,G,C,U,A,A,
-            G,G,U,A,G,A,G,G,G,U,G,A,A,C,G,U,U,A,C,A,G,A,A,A,A,G,C,A,G,G,C,U,G,G,G,A,A,G,C,A,U,A,U,U,U,G,A,G,A,A,G,A,U,G,C,G,G,C,C,A,
-            G,C,A,A,A,A,C,U,A,A,A,A,A,A,C,U,G,U,A,U,U,A,U,A,A,G,U,A,A,A,U,G,C,A,U,G,U,A,U,A,C,U,A,A,A,C,U,C,A,C,A,A,A,U,U,A,G,A,G,C,
-            U,U,C,A,A,U,U,U,A,A,U,U,A,U,A,U,C,A,G,U,U,A,U,U,A,C,C,C,G,G,G];
-        return new Mrna(code);
-    }
 }
 
-/* ADH1, Alcohol dehydrogenase
- * http://www.yeastgenome.org/locus/ADH1/overview
- * Chr 15 from 159472 to 160644 reverse complement
- */
-class TranscriptionADH1(Cell cell, Int rate) implements Transcription {
-
-    Unit run() {
-        while(True) {
-            Mrna mrna = this.genMRNA();
-            await cell!addMRNA(mrna);
-            duration(1/rate, 1/rate);
-        }
-    }
-
-    Mrna genMRNA() {
-        List<Nucleotide> code = list[
-            G,C,A,C,A,A,U,A,U,U,U,C,A,A,G,C,U,A,U,A,C,C,A,A,G,C,A,U,A,C,A,A,U,C,A,A,C,U,A,U,C,U,C,A,U,A,U,A,C,A,A,U,G,U,C,U,A,U,C,C,
-            C,A,G,A,A,A,C,U,C,A,A,A,A,A,G,G,U,G,U,U,A,U,C,U,U,C,U,A,C,G,A,A,U,C,C,C,A,C,G,G,U,A,A,G,U,U,G,G,A,A,U,A,C,A,A,A,G,A,U,A,
-            U,U,C,C,A,G,U,U,C,C,A,A,A,G,C,C,A,A,A,G,G,C,C,A,A,C,G,A,A,U,U,G,U,U,G,A,U,C,A,A,C,G,U,U,A,A,A,U,A,C,U,C,U,G,G,U,G,U,C,U,
-            G,U,C,A,C,A,C,U,G,A,C,U,U,G,C,A,C,G,C,U,U,G,G,C,A,C,G,G,U,G,A,C,U,G,G,C,C,A,U,U,G,C,C,A,G,U,U,A,A,G,C,U,A,C,C,A,U,U,A,G,
-            U,C,G,G,U,G,G,U,C,A,C,G,A,A,G,G,U,G,C,C,G,G,U,G,U,C,G,U,U,G,U,C,G,G,C,A,U,G,G,G,U,G,A,A,A,A,C,G,U,U,A,A,G,G,G,C,U,G,G,A,
-            A,G,A,U,C,G,G,U,G,A,C,U,A,C,G,C,C,G,G,U,A,U,C,A,A,A,U,G,G,U,U,G,A,A,C,G,G,U,U,C,U,U,G,U,A,U,G,G,C,C,U,G,U,G,A,A,U,A,C,U,
-            G,U,G,A,A,U,U,G,G,G,U,A,A,C,G,A,A,U,C,C,A,A,C,U,G,U,C,C,U,C,A,C,G,C,U,G,A,C,U,U,G,U,C,U,G,G,U,U,A,C,A,C,C,C,A,C,G,A,C,G,
-            G,U,U,C,U,U,U,C,C,A,A,C,A,A,U,A,C,G,C,U,A,C,C,G,C,U,G,A,C,G,C,U,G,U,U,C,A,A,G,C,C,G,C,U,C,A,C,A,U,U,C,C,U,C,A,A,G,G,U,A,
-            C,C,G,A,C,U,U,G,G,C,C,C,A,A,G,U,C,G,C,C,C,C,C,A,U,C,U,U,G,U,G,U,G,C,U,G,G,U,A,U,C,A,C,C,G,U,C,U,A,C,A,A,G,G,C,U,U,U,G,A,
-            A,G,U,C,U,G,C,U,A,A,C,U,U,G,A,U,G,G,C,C,G,G,U,C,A,C,U,G,G,G,U,U,G,C,U,A,U,C,U,C,C,G,G,U,G,C,U,G,C,U,G,G,U,G,G,U,C,U,A,G,
-            G,U,U,C,U,U,U,G,G,C,U,G,U,U,C,A,A,U,A,C,G,C,C,A,A,G,G,C,U,A,U,G,G,G,U,U,A,C,A,G,A,G,U,C,U,U,G,G,G,U,A,U,U,G,A,C,G,G,U,G,
-            G,U,G,A,A,G,G,U,A,A,G,G,A,A,G,A,A,U,U,A,U,U,C,A,G,A,U,C,C,A,U,C,G,G,U,G,G,U,G,A,A,G,U,C,U,U,C,A,U,U,G,A,C,U,U,C,A,C,U,A,
-            A,G,G,A,A,A,A,G,G,A,C,A,U,U,G,U,C,G,G,U,G,C,U,G,U,U,C,U,A,A,A,G,G,C,C,A,C,U,G,A,C,G,G,U,G,G,U,G,C,U,C,A,C,G,G,U,G,U,C,A,
-            U,C,A,A,C,G,U,U,U,C,C,G,U,U,U,C,C,G,A,A,G,C,C,G,C,U,A,U,U,G,A,A,G,C,U,U,C,U,A,C,C,A,G,A,U,A,C,G,U,U,A,G,A,G,C,U,A,A,C,G,
-            G,U,A,C,C,A,C,C,G,U,U,U,U,G,G,U,C,G,G,U,A,U,G,C,C,A,G,C,U,G,G,U,G,C,C,A,A,G,U,G,U,U,G,U,U,C,U,G,A,U,G,U,C,U,U,C,A,A,C,C,
-            A,A,G,U,C,G,U,C,A,A,G,U,C,C,A,U,C,U,C,U,A,U,U,G,U,U,G,G,U,U,C,U,U,A,C,G,U,C,G,G,U,A,A,C,A,G,A,G,C,U,G,A,C,A,C,C,A,G,A,G,
-            A,A,G,C,U,U,U,G,G,A,C,U,U,C,U,U,C,G,C,C,A,G,A,G,G,U,U,U,G,G,U,C,A,A,G,U,C,U,C,C,A,A,U,C,A,A,G,G,U,U,G,U,C,G,G,C,U,U,G,U,
-            C,U,A,C,C,U,U,G,C,C,A,G,A,A,A,U,U,U,A,C,G,A,A,A,A,G,A,U,G,G,A,A,A,A,G,G,G,U,C,A,A,A,U,C,G,U,U,G,G,U,A,G,A,U,A,C,G,U,U,G,
-            U,U,G,A,C,A,C,U,U,C,U,A,A,A,U,A,A,G,C,G,A,A,U,U,U,C,U,U,A,U,G,A,U,U,U,A,U,G,A,U,U,U,U,U,A,U,U,A,U,U,A,A,A,U,A,A,G,U,U,A,
-            U,A,A,A,A,A,A,A,A,U,A,A,G,U,G,U,A,U,A,C,A,A,A,U,U,U,U,A,A,A,G,U,G];
-        return new Mrna(code);
-    }
-}
-
-/* Nucleolar S-adenosylmethionine-dependent rRNA methyltransferase
- * http://www.yeastgenome.org/locus/S000002490/overview
- * Chr 4   from 612060 to 613366
- */
-class TranscriptionRRP8(Cell cell, Int rate) implements Transcription {
-
-    Unit run() {
-        while(True) {
-            Mrna mrna = this.genMRNA();
-            await cell!addMRNA(mrna);
-            duration(1/rate, 1/rate);
-        }
-    }
-
-    Mrna genMRNA() {
-        List<Nucleotide> code = list[
-            A,A,C,G,A,A,A,U,U,U,U,A,U,A,U,G,G,C,C,U,U,A,U,U,U,A,A,C,G,U,A,G,A,A,G,G,U,U,G,G,U,C,U,A,U,U,A,A,G,A,C,A,A,A,A,A,C,C,G,U,
-            C,G,C,U,U,U,U,G,A,U,A,A,C,A,A,G,A,C,U,A,A,U,A,A,G,U,C,U,U,C,A,A,A,A,G,A,U,A,A,A,A,A,A,A,A,A,A,A,U,A,A,U,A,G,A,A,A,A,A,A,
-            U,G,G,C,A,A,A,C,U,U,A,C,A,A,G,A,G,A,A,C,A,G,A,A,G,U,U,G,A,A,A,G,A,A,G,A,G,A,C,A,G,A,G,G,C,U,G,A,G,U,U,G,A,A,G,G,A,A,C,A,
-            A,G,U,G,G,A,A,G,A,C,A,U,U,C,C,U,U,C,C,G,A,A,G,G,A,U,C,A,G,U,A,G,C,C,A,A,A,G,A,C,A,U,C,C,C,A,A,A,A,A,A,A,A,A,C,C,A,A,G,A,
-            G,A,A,A,A,G,U,G,A,U,C,A,A,A,A,U,G,A,A,A,C,G,A,G,C,A,A,G,A,A,A,C,G,C,A,A,G,C,A,C,G,A,U,G,A,A,G,A,A,G,C,C,C,C,U,C,U,G,A,U,
-            G,C,A,A,G,U,A,A,A,A,G,A,A,A,A,U,A,U,U,G,A,A,A,A,A,C,C,U,A,C,A,A,A,G,A,A,G,C,A,A,C,U,A,A,C,C,C,C,U,U,U,A,C,A,A,C,A,A,A,A,
-            G,A,U,G,A,U,G,G,C,U,A,A,A,C,U,G,A,C,U,G,G,U,U,C,U,A,G,A,U,U,U,A,G,A,U,G,G,A,U,C,A,A,U,G,A,A,C,A,A,C,U,G,U,A,U,A,C,A,A,U,
-            U,A,G,C,U,C,U,G,A,U,G,A,A,G,C,U,U,U,G,A,A,A,U,U,A,A,U,A,A,A,A,G,A,A,C,A,A,C,C,A,C,A,A,U,U,A,U,U,U,G,A,C,G,A,A,U,A,U,C,A,
-            U,G,A,U,G,G,U,U,U,U,A,G,A,U,C,A,C,A,A,G,U,G,C,A,A,G,C,A,U,G,G,C,C,G,G,A,A,A,A,U,C,C,A,G,U,U,G,A,U,G,U,U,U,U,U,G,U,U,G,A,
-            C,C,A,A,A,U,U,C,G,U,U,A,U,A,G,A,U,G,C,A,U,G,A,A,A,C,C,U,G,U,G,A,A,U,G,C,U,C,C,A,G,G,U,G,G,G,U,U,A,C,C,A,G,G,U,C,U,U,A,A,
-            G,G,A,U,A,G,U,A,A,A,G,A,A,A,U,A,G,U,U,A,U,U,G,C,U,G,A,U,A,U,G,G,G,G,U,G,U,G,G,U,G,A,A,G,C,U,C,A,A,U,U,A,G,C,A,U,U,A,G,A,
-            A,A,U,C,A,A,C,A,A,U,U,U,U,U,U,C,A,A,A,A,A,U,U,A,C,A,A,U,A,A,G,A,A,A,G,C,G,A,A,G,A,A,A,U,A,U,U,U,G,A,A,A,A,G,A,C,G,C,C,A,
-            U,A,A,A,G,U,C,C,A,C,A,G,U,U,U,U,G,A,U,U,U,G,A,A,G,A,A,A,G,C,U,A,A,C,G,A,A,A,G,A,A,U,A,A,C,U,G,U,G,G,C,A,G,A,U,A,U,U,A,G,
-            A,A,A,U,G,U,G,C,C,G,C,U,A,C,C,A,G,A,U,G,A,G,U,C,C,U,G,U,A,C,U,A,U,A,G,U,G,G,U,C,U,U,C,U,G,C,C,U,G,G,C,U,C,U,A,A,U,G,G,G,
-            U,A,C,A,A,A,U,U,U,C,C,U,C,G,A,U,U,U,C,A,U,A,A,A,A,G,A,A,G,C,U,U,A,U,A,G,G,A,U,U,U,U,A,G,C,G,C,C,A,A,G,G,G,G,U,G,A,A,U,U,
-            A,U,G,G,A,U,C,G,C,A,G,A,A,A,U,U,A,A,A,U,C,A,A,G,G,U,U,U,A,G,U,G,A,C,G,G,C,A,A,A,G,G,U,A,A,U,G,A,A,U,U,U,G,U,A,G,A,C,G,C,
-            U,U,U,G,A,A,G,C,U,G,A,U,G,G,G,A,U,U,U,U,U,U,C,A,C,A,A,A,A,A,G,A,C,C,U,U,C,G,A,C,G,A,G,A,A,U,A,A,G,A,U,G,U,U,U,A,C,A,A,G,
-            A,U,U,C,G,A,A,U,U,U,U,U,C,A,A,G,C,C,A,C,C,U,G,C,G,G,A,G,A,U,U,A,U,U,G,A,A,G,A,G,A,G,A,A,G,G,C,A,G,A,A,A,U,U,G,G,A,A,A,G,
-            A,A,G,A,C,A,A,A,A,G,U,U,U,A,U,U,G,A,A,G,U,U,G,A,A,A,C,U,G,A,G,A,A,G,G,A,A,G,A,A,U,U,A,G,A,A,A,A,G,A,A,A,A,G,A,C,G,G,A,A,
-            A,A,U,U,G,C,C,G,A,A,G,G,A,A,A,A,U,G,G,C,U,C,U,U,G,A,A,G,C,C,C,U,G,U,A,U,U,U,A,U,A,A,A,A,G,A,A,G,A,U,A,A,C,G,A,C,U,U,C,A,
-            U,C,C,G,U,C,A,U,U,U,U,C,A,U,A,U,U,U,U,A,A,U,A,U,U,G,U,U,U,U,U,U,C,U,U,U,U,G,U,A,U,A,C,U,A,U,A,U,U,U,A,U,A,C,A,U,A,U,A,A,
-            U,U,G,U,A,U,U,C,U,U,U,U,C,C,U,G,U,A,G,U,A,C,A,U,U,G,C,G,U,A,A,A,G,U,A,A,A,A,A,U,C,A,U,C,U,A,G];
-        return new Mrna(code);
-    }
-}
-
-
-//An error occurred during compilation:
-//Cannot find modifier above TraitExpr in AST!
-
-trait TranscriptionRun = {
-    Unit run() {
-        //while(True) {
-            Mrna mrna = this.genMRNA();
-            await cell!addMRNA(mrna);
-            //duration(1/rate, 1/rate);
-        //}
-    }
+trait Control = {
+    Rat getRate() { return rate; }
+    Unit start() { run = True; }
+    Unit stop() { run = False; }
+    Bool isOn() { return run; }
 
 }
 

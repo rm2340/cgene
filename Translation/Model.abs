@@ -1,0 +1,89 @@
+module Model;
+export HTTPInterface, Model;
+import * from Cell;
+import * from Degradation;
+import * from Ribosome;
+import * from Transcription;
+
+interface HTTPInterface {
+    [HTTPCallable] Unit setQuantRibosomes(Int n);
+    [HTTPCallable] Int getQuantMrna();
+    [HTTPCallable] Int getQuantProtein();
+    [HTTPCallable] Int getQuantRibosome();
+    [HTTPCallable] Unit setDegradationMrna(Bool on, Int nom, Int den);
+    [HTTPCallable] Unit setDegradationProtein(Bool on, Int nom, Int den);
+    [HTTPCallable] Unit setTranscription(Bool on, Int nom, Int den);
+    [HTTPCallable] Pair<Bool, Rat> statusDegradationMrna();
+    [HTTPCallable] Pair<Bool, Rat> statusDegradationProtein();
+    [HTTPCallable] List<Rat> statusTranscription();
+}
+
+class Model([Near] Cell cell, Set<Transcription> tscript, Degradation md, Degradation pd) implements HTTPInterface {
+
+    Unit setQuantRibosomes(Int n) {
+        Int current = cell.getQuantRibosome();
+        if (n < current) {
+            // too many
+            Int diff = current - n;
+            cell.removeRibosomes(diff);
+        } else {
+            // too few
+            Int diff = n - current;
+            while (diff > 0) {
+                Ribosome ribo = new Ribosome(cell);
+                cell.addRibosome(ribo);
+                diff = diff - 1;
+                suspend;
+            }
+        }
+
+    }
+
+    Int getQuantMrna() {
+        return cell.getQuantMrna();
+    }
+    Int getQuantProtein() {
+        return cell.getQuantProtein();
+    }
+    Int getQuantRibosome() {
+        return cell.getQuantRibosome();
+    }
+
+    Pair<Bool, Rat> statusDegradationMrna() {
+        Bool on = md.isOn();
+        Rat rate = await md!getRate();
+        return Pair(on, rate);
+    }
+    Pair<Bool, Rat> statusDegradationProtein() {
+        Bool on = await pd!isOn();
+        Rat rate = await pd!getRate();
+        return Pair(on, rate);
+    }
+
+    Unit setDegradationMrna(Bool on, Int nom, Int den) {
+        md.setRate(nom/den);
+        if (on) { md.start(); } else { md.stop(); }
+
+    }
+    Unit setDegradationProtein(Bool on, Int num, Int den) {
+        pd.setRate(num/den);
+        if (on)
+            pd.start();
+        else
+            pd.stop();
+    }
+
+    Unit setTranscription(Bool on, Int num, Int den) {
+
+    }
+
+    List<Rat> statusTranscription() {
+        List<Rat> rates = list[];
+        foreach (ts in setToList(tscript)) {
+            Rat r = await ts!getRate();
+            rates = appendright(rates, r);
+        }
+        return rates;
+    }
+
+}

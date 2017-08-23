@@ -8,21 +8,5 @@ data Aminoacid =
     Leu | Lys | Met | Phe | Pro |
     Ser | Thr | Trp | Tyr | Val ;
 
+data Protein = Protein(String proteinID, List<Aminoacid> proteinAminoacids);
 
-interface Protein {
-    Unit add(Aminoacid a);
-    Int getLength();
-}
-
-// A protein is a chain (list) of amino acids
-class Protein implements Protein {
-    List<Aminoacid> chain = list[];
-
-    Unit add(Aminoacid a) {
-        chain = appendright(chain, a);
-    }
-
-    Int getLength() {
-        return length(chain);
-    }
-}

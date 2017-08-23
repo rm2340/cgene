@@ -1,0 +1,18 @@
+module Translation;
+import * from Dna;
+
+
+class Translation(Gene gene) {
+
+    // init block (constructor)
+    {
+
+
+    }
+
+    Unit run() {
+
+
+    }
+}
+

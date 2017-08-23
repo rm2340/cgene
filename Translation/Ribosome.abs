@@ -1,39 +1,55 @@
 module Ribosome;
 export Ribosome;
+import * from Dna;
 import * from Mrna;
 import * from Cell;
 import * from Protein;
 
 interface Ribosome {
     Unit run();
+    Unit stop();
 }
 
 
 /* Model of a ribosome
  * synthesizing protein from mRNA
  */
-class Ribosome(Cell cell) implements Ribosome {
+class Ribosome([Final] Cell cell) implements Ribosome {
 
+    Bool run = True;
+    Bool attached = False;
+    Mrna mrna;
     Int position = -1; // The ribosome's current position on the mRNA strand
+    String mrnaID = ""; // The mRNA's name (id)
 
     Unit run() {
-        while (True) {
+        while (run) {
             /* Try to obtain mRNA; if successful,
              *     attach to mRNA,
              *     scan for start codon
              *     decode mRNA (codon by codon),
              *     detach upon encountering stop codon
              */
-            Mrna mrna = await cell!obtainMrna();
-            Bool attached = await mrna!attach(this);
+            mrna = await cell!obtainMrna();
+            attached = await mrna!attach(this);
             position = 0;
             if (attached) {
+                mrnaID = await mrna!getID();
                 this.scan(mrna);
                 this.decode(mrna);
             } else {
                 //println("Ribosome failed to attach to mRNA");
             }
         }
+        println("Ribosome retired");
+    }
+
+    Unit stop() {
+        if (attached) {
+            await mrna!detach(this, position);
+            mrna = null;
+        }
+        run = False;
     }
 
     /* Look for the start codon
@@ -58,8 +74,8 @@ class Ribosome(Cell cell) implements Ribosome {
     }
 
     Unit decode(Mrna mrna) {
-        println("Ribosome starts decoding mrna at pos " + toString(position));
-        Protein prot = await cell!newProtein();
+        //println("Ribosome " + toString(this) + " starts decoding mrna at pos " + toString(position));
+        List<Aminoacid> aminoacids = list[];
         Bool stop = False;
         while(!stop) {
             // read codon
@@ -67,18 +83,22 @@ class Ribosome(Cell cell) implements Ribosome {
             List<Nucleotide> codon = this.readCodon(mrna);
             if (stop(codon)) {
                 stop = True;
-                println("Ribosome stops decoding mrna; at pos " + toString(position));
+                //println("Ribosome stops decoding mrna; at pos " + toString(position));
                 await mrna!detach(this, position);
                 //println("Stop decoding mrna");
-                await cell!addProtein(prot);
+                await cell!addProtein(Protein(mrnaID, aminoacids));
             } else {
-                // Since not a stop codon, assume another codon is following
-                position = await mrna!advance(this, position);
-                print("Codon: " + toString(codon));
+                //print("Codon: " + toString(codon));
                 Aminoacid aa = aminoacid(nth(codon, 0), nth(codon, 1), nth(codon, 2));
-                println("  --> Aminoacid: " + toString(aa));
-                await prot!add(aa);
-                duration(1/12, 1/21); // Rate of translation by the ribosome [http://bionumbers.hms.harvard.edu/bionumber.aspx?id=100059]
+                //println("  --> Aminoacid: " + toString(aa));
+                aminoacids = appendright(aminoacids, aa);
+                Int r = random(20) + 1;
+                await duration(1/r, 1/r); // Rate of translation by the ribosome [http://bionumbers.hms.harvard.edu/bionumber.aspx?id=100059]
+                // Since not a stop codon, assume another codon is following
+                Fut<Int> f = mrna!advance(this, position);
+                position = f.get;
+
+                //position = await mrna!advance(this, position);
             }
          }
     }
@@ -96,8 +116,6 @@ class Ribosome(Cell cell) implements Ribosome {
         // #3
         n = await mrna!readNucleotide(position);
         codon = appendright(codon, n);
-        // do not advance, until we know what we just read was not a stop codon
-
         assert length(codon) == 3;
         return codon;
     }
@@ -119,13 +137,10 @@ def Aminoacid aminoacid(Nucleotide n1, Nucleotide n2, Nucleotide n3) =
             A => case n3 {
                 U => Tyr;
                 C => Tyr;
-                //A => Stp;
-                //G => Stp;
             };
             G => case n3 {
                 U => Cys;
                 C => Cys;
-                //A => Stp;
                 G => Trp;
             };
         };

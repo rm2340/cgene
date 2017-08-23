@@ -1,37 +1,78 @@
 module Degradation;
-export *;
+export Degradation, ProteinDegradation, MrnaDegradation;
 import * from Cell;
 
+/*
+ * A crude degradation mechanism
+ * based on a given rate and the quantity of the respective reactant
+ */
 
 interface Degradation {
+    Unit start();
+    Unit stop();
+    Bool isOn();
+    Rat getRate();
+    Unit setRate(Rat r);
     Unit run();
 }
 
-class ProteinDegradation (Cell cell, Int rate) implements Degradation {
-    Unit run() {
-        while (True) {
-            duration(1/9999, 1/9999);
-            Int quantity = await cell!getQuantProtein();
-            if (quantity > 0) {
-                Rat d = 1 / (rate * quantity);
-                await cell!degradeProtein();
-                duration(d, d);
-            }
-        }
+[Far]
+class ProteinDegradation ([Final] Cell cell, Rat rate) implements Degradation {
+    Bool run = True;
+    uses RunD;
+
+    Unit start() { run = True; }
+    Unit stop() { run = False; }
+    Bool isOn() { return run; }
+    Rat getRate() { return rate; }
+    Unit setRate(Rat r) {
+        if (r > 0)
+            this.rate = r;
     }
 
+    Int getQuantity() {
+        return await cell!getQuantProtein();
+    }
+    Unit degrade() {
+        await cell!degradeProtein();
+    }
 }
 
-class MrnaDegradation (Cell cell, Int rate) implements Degradation {
-    Unit run() {
-        while (True) {
-            Int quantity = await cell!getQuantMrna();
-            if (quantity > 0) {
-                Rat d = 1 / (rate * quantity);
-                await cell!degradeMrna();
-                duration(d, d);
-            }
-        }
+[Far]
+class MrnaDegradation ([Final] Cell cell, Rat rate) implements Degradation {
+    Bool run = True;
+    uses RunD;
+
+    Unit start() { run = True; }
+    Unit stop() { run = False; }
+    Bool isOn() { return run; }
+    Rat getRate() { return rate; }
+    Unit setRate(Rat r) {
+        if (r > 0)
+            this.rate = r;
     }
 
+    Int getQuantity() {
+        return await cell!getQuantMrna();
+    }
+    Unit degrade() {
+        await cell!degradeMrna();
+    }
 }
+
+// FIXME: rename trait RunD to Run once the compiler is fixed
+trait RunD = {
+    Unit run() {
+        assert rate > 0;
+        while (True) {
+            await this.run;
+            Int quantity = this.getQuantity();
+            assert quantity > 0;
+            Rat d = 1 / (rate * quantity);
+            this.degrade();
+            duration(d, d);
+        }
+    }
+}
+
+

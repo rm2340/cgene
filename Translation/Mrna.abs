@@ -1,17 +1,7 @@
 module Mrna;
-export Mrna, Nucleotide, A, C, G, U, nuc, stop;
+export Mrna, stop;
+import * from Dna;
 import * from Ribosome;
-
-// adenine, cytosine, guanine, uracil
-data Nucleotide = A | C | G | U;
-
-def Nucleotide nuc() =
-    case random(4) {
-        0 => A;
-        1 => C;
-        2 => G;
-        3 => U;
-    };
 
 
 /* // Would be nice if this would work...
@@ -39,10 +29,11 @@ interface Mrna {
     Int advance(Ribosome rib, Int pos);
     List<Nucleotide> readCodon(Int pos);
     Nucleotide readNucleotide(Int pos);
+    String getID();
     String toString();
 }
 
-class Mrna(List<Nucleotide> code) implements Mrna {
+class Mrna([Final] Gene gene) implements Mrna {
 
     // This map remembers the positions of ribosomes in the mRNA strand
     // Only one ribosome can be at a certain position
@@ -51,7 +42,7 @@ class Mrna(List<Nucleotide> code) implements Mrna {
     // init block (constructor)
     {
         Int i = 0;
-        while(i < length(code)) {
+        while(i < length(code(gene))) {
             occupancy = put(occupancy, i, Nothing);
             i = i + 1;
         }
@@ -83,15 +74,11 @@ class Mrna(List<Nucleotide> code) implements Mrna {
         // clear pos
         occupancy = put(occupancy, pos, Nothing);
         //println("Ribosome detached from mRNA");
-
-        // decoding the entire mrna takes 1, regadless of how long it is
-        // TODO let decoding each codon have certain duration
-        //duration(1,1);
     }
 
     // Move the Ribosome rib from position pos to pos+1 (one nucleotide further)
     Int advance(Ribosome rib, Int pos) {
-        assert pos < length(code) - 1;
+        assert pos < length(code(gene)) - 1;
         //wait until next position is free
         //println("waiting before pos " + toString(pos+1));
         await(lookupUnsafe(occupancy, pos+1) == Nothing);
@@ -106,18 +93,21 @@ class Mrna(List<Nucleotide> code) implements Mrna {
 
     // Read codon at position pos
     List<Nucleotide> readCodon(Int pos) {
-        List<Nucleotide> codon = list[nth(code, pos), nth(code, pos+1), nth(code, pos+2)];
+        List<Nucleotide> codon = list[nth(code(gene), pos), nth(code(gene), pos+1), nth(code(gene), pos+2)];
         return codon;
     }
 
     Nucleotide readNucleotide(Int pos) {
-        assert pos < length(code);
-        return nth(code, pos);
+        assert pos < length(code(gene));
+        return nth(code(gene), pos);
     }
 
 
+    String getID() {
+        return id;
+    }
     String toString() {
-        return toString(code);
+        return id + ": " + toString(code(gene));
     }
     String occupancyToString() {
         String res = "";
