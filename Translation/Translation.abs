@@ -1,8 +1,10 @@
 module Translation;
+export Translation;
 import * from Dna;
 
+interface Translation {}
 
-class Translation(Gene gene) {
+class Translation(Gene gene) implements Translation {
 
     // init block (constructor)
     {
