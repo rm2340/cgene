@@ -30,7 +30,7 @@ class Ribosome([Final] Cell cell) implements Ribosome {
              *     decode mRNA (codon by codon),
              *     detach upon encountering stop codon
              */
-            mrna = await cell!obtainMrna();
+            mrna = await cell!getMrna();
             attached = await mrna!attach(this);
             position = 0;
             if (attached) {

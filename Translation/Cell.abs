@@ -6,8 +6,8 @@ import * from Mrna;
 import * from Ribosome;
 import * from Protein;
 import * from Degradation;
-import * from Logger;
-import * from Model;
+//import * from Logger;
+//import * from Main;
 
 def List<A> setToList<A>(Set<A> s) =
     if hasNext(s)
@@ -15,37 +15,40 @@ def List<A> setToList<A>(Set<A> s) =
     else Nil;
 
 interface Cell {
-    Unit addMRNA(Mrna mrna);
-    Unit addRibosome(Ribosome ribo);
-    Unit removeRibosomes(Int n);
+    Unit addMRNA(String id, Mrna mrna);
+    Mrna getMrna();
     Unit addProtein(Protein prot);
-    Mrna obtainMrna();
+    Unit addRibosome(Ribosome ribo);
 
     Int getQuantProtein();
-    Int getQuantMrna();
+    Int getQuantMrna(String id);
     Int getQuantRibosome();
 
-    Unit degradeProtein();
-    Unit degradeMrna();
+    Unit removeProtein();
+    Unit removeMrna(String id);
+    Unit removeRibosomes(Int n);
 
     [HTTPCallable] Pair<Time, Int> getMrnaInfo();
     [HTTPCallable] Pair<Time, Int> getProtInfo();
     [HTTPCallable] Pair<Time, Int> getRiboInfo();
 }
 
+/*
+ * A cell is essentially a container for the actors (reactants)
+ * DNAs, MRNAs, Ribosomes, Proteins, etc
+ */
 class Cell implements Cell {
-    Map<Gene, List<Mrna>> mrnas = map[];
-
-
-    List<Mrna> mrnaStrands = list[];
+    Map<String, List<Mrna>> mrnas = map[];
+    //List<Mrna> mrnaStrands = list[];
     List<Protein> proteins = list[];
     Set<Ribosome> ribosomes = set[];
 
+    /*
     Unit addMRNA(Mrna mrna) {
         mrnaStrands = appendright(mrnaStrands, mrna);
-    }
-    Unit addMRNA(Gene gene, Mrna mrna) {
-        mrnas = put(mrnas, gene, mrna);
+    }*/
+    Unit addMRNA(String id, Mrna mrna) {
+        mrnas = put(mrnas, id, appendright(lookupUnsafe(mrnas, id), mrna));
     }
 
 
@@ -72,43 +75,47 @@ class Cell implements Cell {
         await length(proteins) > 0;
         return length(proteins);
     }
-    Unit degradeProtein() {
+    Unit removeProtein() {
         assert length(proteins) > 0;
         proteins = tail(proteins);
     }
-    Int getQuantMrna() {
-        await length(mrnaStrands) > 0;
-        return length(mrnaStrands);
+    Int getQuantMrna(String id) {
+        await length(lookupUnsafe(mrnas, id)) > 0;
+        return length(lookupUnsafe(mrnas, id));
     }
+    Unit removeMrna(String id) {
+        if (length(lookupUnsafe(mrnas, id)) > 0) {
+            mrnas = put(mrnas, id, tail(lookupUnsafe(mrnas, id)));
+        }
+    }
+    Int getQuantRibosome() {
+        return size(ribosomes);
+    }
+
 
     /****************************************************************
      *** HTTP Callables ***
      */
     Pair<Time,Int> getMrnaInfo() {
-        return Pair(now(), length(mrnaStrands));
+        return Pair(now(), 0 /* FIXME length(mrnaStrands) */);
     }
     Pair<Time,Int> getProtInfo() {
-        return Pair(now(), length(proteins));
+        return Pair(now(), 0 /* FIXME length(proteins) */);
     }
     Pair<Time,Int> getRiboInfo() {
         return Pair(now(), size(ribosomes));
     }
     /***************************************************************/
 
-    Unit degradeMrna() {
-        assert length(mrnaStrands) > 0;
-        mrnaStrands = tail(mrnaStrands);
-    }
-
-    Int getQuantRibosome() {
-        return size(ribosomes);
-    }
-
     // Randomly return one of the mRNA strands for decoding
-    Mrna obtainMrna() {
-        await length(mrnaStrands) > 0;
-        Int n = random(length(mrnaStrands));
-        Mrna mrna = nth(mrnaStrands, n);
+    Mrna getMrna() {
+        List<String> keys = elements(keys(mrnas));
+        // FIXME can the list be empty?
+
+        String id = nth(keys, random(length(keys)));
+        await length(lookupUnsafe(mrnas, id)) > 0;
+        Int n = random(length(lookupUnsafe(mrnas, id)));
+        Mrna mrna = nth(lookupUnsafe(mrnas, id), n);
         //String s = await mrna!toString();
         //println("Cell: offering mRNA: " + s);
         return mrna;

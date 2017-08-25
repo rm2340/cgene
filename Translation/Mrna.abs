@@ -33,7 +33,7 @@ interface Mrna {
     String toString();
 }
 
-class Mrna([Final] Gene gene) implements Mrna {
+class Mrna([Final] String id, List<Nucleotide> code) implements Mrna {
 
     // This map remembers the positions of ribosomes in the mRNA strand
     // Only one ribosome can be at a certain position
@@ -42,7 +42,7 @@ class Mrna([Final] Gene gene) implements Mrna {
     // init block (constructor)
     {
         Int i = 0;
-        while(i < length(code(gene))) {
+        while(i < length(code)) {
             occupancy = put(occupancy, i, Nothing);
             i = i + 1;
         }
@@ -78,7 +78,7 @@ class Mrna([Final] Gene gene) implements Mrna {
 
     // Move the Ribosome rib from position pos to pos+1 (one nucleotide further)
     Int advance(Ribosome rib, Int pos) {
-        assert pos < length(code(gene)) - 1;
+        assert pos < length(code) - 1;
         //wait until next position is free
         //println("waiting before pos " + toString(pos+1));
         await(lookupUnsafe(occupancy, pos+1) == Nothing);
@@ -93,13 +93,13 @@ class Mrna([Final] Gene gene) implements Mrna {
 
     // Read codon at position pos
     List<Nucleotide> readCodon(Int pos) {
-        List<Nucleotide> codon = list[nth(code(gene), pos), nth(code(gene), pos+1), nth(code(gene), pos+2)];
+        List<Nucleotide> codon = list[nth(code, pos), nth(code, pos+1), nth(code, pos+2)];
         return codon;
     }
 
     Nucleotide readNucleotide(Int pos) {
-        assert pos < length(code(gene));
-        return nth(code(gene), pos);
+        assert pos < length(code);
+        return nth(code, pos);
     }
 
 
@@ -107,7 +107,7 @@ class Mrna([Final] Gene gene) implements Mrna {
         return id;
     }
     String toString() {
-        return id + ": " + toString(code(gene));
+        return id + ": " + toString(code);
     }
     String occupancyToString() {
         String res = "";

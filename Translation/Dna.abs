@@ -1,5 +1,6 @@
 module Dna;
-export Gene, Nucleotide, A, C, G, U, nuc;
+export Gene, id, code;
+export Nucleotide, A, C, G, U, nuc;
 
 
 data Gene = Gene(String id, List<Nucleotide> code);

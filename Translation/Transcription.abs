@@ -24,7 +24,7 @@ class TranscriptionRandom([Final] Cell cell, Rat rate) implements Transcription 
     Unit run() {
         while(True) {
             Mrna mrna = this.genMRNA(1000);
-            await cell!addMRNA(mrna);
+            await cell!addMRNA("Random", mrna);
             duration(1/rate, 1/rate);
         }
     }
@@ -72,8 +72,9 @@ class Transcription([Final] Gene gene, [Final] Cell cell, Rat rate) implements T
     Unit run() {
         while(True) {
             await this.run;
-            Mrna mrna = new Mrna(gene);
-            await cell!addMRNA(mrna);
+            // TODO: implement the transcription process
+            Mrna mrna = new Mrna(id(gene), code(gene));
+            await cell!addMRNA(id(gene), mrna);
             duration(1/rate, 1/rate);
         }
 

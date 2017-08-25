@@ -16,6 +16,11 @@ interface Degradation {
     Unit run();
 }
 
+interface Degradable {
+    // TODO
+}
+
+
 [Far]
 class ProteinDegradation ([Final] Cell cell, Rat rate) implements Degradation {
     Bool run = True;
@@ -34,12 +39,12 @@ class ProteinDegradation ([Final] Cell cell, Rat rate) implements Degradation {
         return await cell!getQuantProtein();
     }
     Unit degrade() {
-        await cell!degradeProtein();
+        await cell!removeProtein();
     }
 }
 
 [Far]
-class MrnaDegradation ([Final] Cell cell, Rat rate) implements Degradation {
+class MrnaDegradation ([Final] Cell cell, String id, Rat rate) implements Degradation {
     Bool run = True;
     uses RunD;
 
@@ -53,10 +58,10 @@ class MrnaDegradation ([Final] Cell cell, Rat rate) implements Degradation {
     }
 
     Int getQuantity() {
-        return await cell!getQuantMrna();
+        return await cell!getQuantMrna(id);
     }
     Unit degrade() {
-        await cell!degradeMrna();
+        await cell!removeMrna(id);
     }
 }
 

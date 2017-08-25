@@ -20,7 +20,7 @@ interface HTTPInterface {
     [HTTPCallable] List<Rat> statusTranscription();
 }
 
-class Model([Near] Cell cell, Set<Transcription> tscript, Degradation md, Degradation pd) implements HTTPInterface {
+class Model([Near] Cell cell, Set<Transcription> tscript, Set<Degradation> md, Set<Degradation> pd) implements HTTPInterface {
 
     Unit setQuantRibosomes(Int n) {
         Int current = cell.getQuantRibosome();
@@ -42,7 +42,9 @@ class Model([Near] Cell cell, Set<Transcription> tscript, Degradation md, Degrad
     }
 
     Int getQuantMrna() {
-        return cell.getQuantMrna();
+        //return cell.getQuantMrna();
+        // FIXME
+        return 999;
     }
     Int getQuantProtein() {
         return cell.getQuantProtein();
@@ -52,14 +54,20 @@ class Model([Near] Cell cell, Set<Transcription> tscript, Degradation md, Degrad
     }
 
     Pair<Bool, Rat> statusDegradationMrna() {
+        /* FIXME
         Bool on = md.isOn();
         Rat rate = await md!getRate();
         return Pair(on, rate);
+        */
+        return Pair(False, 0);
     }
     Pair<Bool, Rat> statusDegradationProtein() {
+        /* FIXME
         Bool on = await pd!isOn();
         Rat rate = await pd!getRate();
         return Pair(on, rate);
+        */
+        return Pair(False, 0);
     }
 
     Unit setDegradationMrna(Bool on, Int nom, Int den) {
@@ -185,11 +193,15 @@ class Model([Near] Cell cell, Set<Transcription> tscript, Degradation md, Degrad
     // Start degradation
     // Prot -> 0, rate
     // mRNA -> 0, rate
-    Degradation md = new MrnaDegradation(cell, 1/10);
+    Degradation md1 = new MrnaDegradation(cell, id(ura3), 1/50);
+    Degradation md2 = new MrnaDegradation(cell, id(adh1), 1/50);
+    Degradation md3 = new MrnaDegradation(cell, id(rrp8), 1/50);
     Degradation pd = new ProteinDegradation(cell, 1/50);
 
 
-    Translation tl1 = new Translation();
+    Translation tl1 = new Translation(ura3);
+    Translation tl2 = new Translation(adh1);
+    Translation tl3 = new Translation(rrp8);
 
     // Initial populations
     // Translation of proteins in E. coli is carried out by ~10,000-100,000 ribosomes
@@ -206,7 +218,7 @@ class Model([Near] Cell cell, Set<Transcription> tscript, Degradation md, Degrad
     /*
      * HTTP Interface
      */
-    [HTTPName: "Model"] HTTPInterface model = new local Model(cell, set[ts1, ts2, ts3], md, pd);
+    [HTTPName: "Model"] HTTPInterface model = new local Model(cell, set[ts1, ts2, ts3], set[md1, md2, md3], set[pd]);
 
 }
 
