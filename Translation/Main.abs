@@ -12,15 +12,14 @@ interface HTTPInterface {
     [HTTPCallable] Int getQuantMrna();
     [HTTPCallable] Int getQuantProtein();
     [HTTPCallable] Int getQuantRibosome();
-    [HTTPCallable] Unit setDegradationMrna(Bool on, Int nom, Int den);
-    [HTTPCallable] Unit setDegradationProtein(Bool on, Int nom, Int den);
+    [HTTPCallable] Unit setDegradation(Degradation d, Bool on, Int nom, Int den);
     [HTTPCallable] Unit setTranscription(Bool on, Int nom, Int den);
     [HTTPCallable] Pair<Bool, Rat> statusDegradationMrna();
     [HTTPCallable] Pair<Bool, Rat> statusDegradationProtein();
     [HTTPCallable] List<Rat> statusTranscription();
 }
 
-class Model([Near] Cell cell, Set<Transcription> tscript, Set<Degradation> md, Set<Degradation> pd) implements HTTPInterface {
+class Model([Near] Cell cell, Set<Transcription> tscript, Set<Degradation> deg) implements HTTPInterface {
 
     Unit setQuantRibosomes(Int n) {
         Int current = cell.getQuantRibosome();
@@ -70,17 +69,13 @@ class Model([Near] Cell cell, Set<Transcription> tscript, Set<Degradation> md, S
         return Pair(False, 0);
     }
 
-    Unit setDegradationMrna(Bool on, Int nom, Int den) {
-        md.setRate(nom/den);
-        if (on) { md.start(); } else { md.stop(); }
-
-    }
-    Unit setDegradationProtein(Bool on, Int num, Int den) {
-        pd.setRate(num/den);
+    Unit setDegradation(Degradation d, Bool on, Int nom, Int den) {
+        d.setRate(nom/den);
         if (on)
-            pd.start();
+            d.start();
         else
-            pd.stop();
+            d.stop();
+
     }
 
     Unit setTranscription(Bool on, Int num, Int den) {
@@ -218,7 +213,7 @@ class Model([Near] Cell cell, Set<Transcription> tscript, Set<Degradation> md, S
     /*
      * HTTP Interface
      */
-    [HTTPName: "Model"] HTTPInterface model = new local Model(cell, set[ts1, ts2, ts3], set[md1, md2, md3], set[pd]);
+    [HTTPName: "Model"] HTTPInterface model = new local Model(cell, set[ts1, ts2, ts3], set[md1, md2, md3, pd]);
 
 }
 

@@ -38,6 +38,7 @@ interface Cell {
  * DNAs, MRNAs, Ribosomes, Proteins, etc
  */
 class Cell implements Cell {
+
     Map<String, List<Mrna>> mrnas = map[];
     //List<Mrna> mrnaStrands = list[];
     List<Protein> proteins = list[];
@@ -48,7 +49,9 @@ class Cell implements Cell {
         mrnaStrands = appendright(mrnaStrands, mrna);
     }*/
     Unit addMRNA(String id, Mrna mrna) {
-        mrnas = put(mrnas, id, appendright(lookupUnsafe(mrnas, id), mrna));
+        List<Mrna> li = lookupUnsafe(mrnas, id);
+        li = appendright(li, mrna);
+        mrnas = put(mrnas, id, li);
     }
 
 

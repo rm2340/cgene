@@ -16,10 +16,6 @@ interface Degradation {
     Unit run();
 }
 
-interface Degradable {
-    // TODO
-}
-
 
 [Far]
 class ProteinDegradation ([Final] Cell cell, Rat rate) implements Degradation {
@@ -64,6 +60,7 @@ class MrnaDegradation ([Final] Cell cell, String id, Rat rate) implements Degrad
         await cell!removeMrna(id);
     }
 }
+
 
 // FIXME: rename trait RunD to Run once the compiler is fixed
 trait RunD = {
