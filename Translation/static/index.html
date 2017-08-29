@@ -80,9 +80,9 @@
         function loadJSON() {
             // https://lostechies.com/joshuaflanagan/2011/10/20/coordinating-multiple-ajax-requests-with-jquery-when/
             $.when(
-                $.getJSON("call/Cell/getMrnaInfo"),
-                $.getJSON("call/Cell/getProtInfo"),
-                $.getJSON("call/Cell/getRiboInfo")
+                $.getJSON("call/Model/getTSumMrna"),
+                $.getJSON("call/Model/getTSumProtein"),
+                $.getJSON("call/Model/getTSumRibosome")
             ).done(function(dataM, dataP, dataR) {
                 // TODO: check for success before stumbling ahead?
 
@@ -170,8 +170,8 @@
 
         function modelInfo() {
             $.when(
-                $.getJSON("call/Model/getQuantMrna"),
-                $.getJSON("call/Model/getQuantProtein"),
+                $.getJSON("call/Model/getInfoMrna"),
+                $.getJSON("call/Model/getSumProtein"),
                 $.getJSON("call/Model/getQuantRibosome"),
                 $.getJSON("call/Model/statusDegradationMrna"),
                 $.getJSON("call/Model/statusDegradationProtein"),

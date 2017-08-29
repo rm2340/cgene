@@ -21,18 +21,10 @@ interface Degradation {
 class ProteinDegradation ([Final] Cell cell, Rat rate) implements Degradation {
     Bool run = True;
     uses RunD;
-
-    Unit start() { run = True; }
-    Unit stop() { run = False; }
-    Bool isOn() { return run; }
-    Rat getRate() { return rate; }
-    Unit setRate(Rat r) {
-        if (r > 0)
-            this.rate = r;
-    }
+    uses ControlD;
 
     Int getQuantity() {
-        return await cell!getQuantProtein();
+        return await cell!getSumProtein();
     }
     Unit degrade() {
         await cell!removeProtein();
@@ -43,15 +35,7 @@ class ProteinDegradation ([Final] Cell cell, Rat rate) implements Degradation {
 class MrnaDegradation ([Final] Cell cell, String id, Rat rate) implements Degradation {
     Bool run = True;
     uses RunD;
-
-    Unit start() { run = True; }
-    Unit stop() { run = False; }
-    Bool isOn() { return run; }
-    Rat getRate() { return rate; }
-    Unit setRate(Rat r) {
-        if (r > 0)
-            this.rate = r;
-    }
+    uses ControlD;
 
     Int getQuantity() {
         return await cell!getQuantMrna(id);
@@ -77,4 +61,13 @@ trait RunD = {
     }
 }
 
-
+trait ControlD = {
+    Unit start() { run = True; }
+    Unit stop() { run = False; }
+    Bool isOn() { return run; }
+    Rat getRate() { return rate; }
+    Unit setRate(Rat r) {
+        if (r > 0)
+            this.rate = r;
+    }
+}

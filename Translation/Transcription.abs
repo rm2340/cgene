@@ -13,6 +13,25 @@ interface Transcription {
     Unit run();
 }
 
+[Far]
+class Transcription([Final] Gene gene, [Final] Cell cell, Rat rate) implements Transcription {
+    Bool run = True;
+    uses Control;
+
+    Unit run() {
+        while(True) {
+            await this.run;
+            // TODO: implement the DNA->mRNA transcription process
+            Mrna mrna = new Mrna(id(gene), code(gene));
+            await cell!addMrna(id(gene), mrna);
+            duration(1/rate, 1/rate);
+        }
+
+    }
+
+}
+
+
 /* Abstract transcription simulation by generating random mRNA strands of given length.
  * Corresponds to reaction: 0 -> mRNA (constant rate)
  */
@@ -24,7 +43,7 @@ class TranscriptionRandom([Final] Cell cell, Rat rate) implements Transcription 
     Unit run() {
         while(True) {
             Mrna mrna = this.genMRNA(1000);
-            await cell!addMRNA("Random", mrna);
+            await cell!addMrna("Random", mrna);
             duration(1/rate, 1/rate);
         }
     }
@@ -64,23 +83,6 @@ class TranscriptionRandom([Final] Cell cell, Rat rate) implements Transcription 
 }
 
 
-[Far]
-class Transcription([Final] Gene gene, [Final] Cell cell, Rat rate) implements Transcription {
-    Bool run = True;
-    uses Control;
-
-    Unit run() {
-        while(True) {
-            await this.run;
-            // TODO: implement the transcription process
-            Mrna mrna = new Mrna(id(gene), code(gene));
-            await cell!addMRNA(id(gene), mrna);
-            duration(1/rate, 1/rate);
-        }
-
-    }
-
-}
 
 trait Control = {
     Rat getRate() { return rate; }

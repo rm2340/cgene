@@ -15,22 +15,20 @@ def List<A> setToList<A>(Set<A> s) =
     else Nil;
 
 interface Cell {
-    Unit addMRNA(String id, Mrna mrna);
+    Unit addMrna(String id, Mrna mrna);
     Mrna getMrna();
     Unit addProtein(Protein prot);
     Unit addRibosome(Ribosome ribo);
 
-    Int getQuantProtein();
+    Int getSumProtein();
     Int getQuantMrna(String id);
+    Int getSumMrna();
+    String getInfoMrna();
     Int getQuantRibosome();
 
     Unit removeProtein();
     Unit removeMrna(String id);
     Unit removeRibosomes(Int n);
-
-    [HTTPCallable] Pair<Time, Int> getMrnaInfo();
-    [HTTPCallable] Pair<Time, Int> getProtInfo();
-    [HTTPCallable] Pair<Time, Int> getRiboInfo();
 }
 
 /*
@@ -48,7 +46,9 @@ class Cell implements Cell {
     Unit addMRNA(Mrna mrna) {
         mrnaStrands = appendright(mrnaStrands, mrna);
     }*/
-    Unit addMRNA(String id, Mrna mrna) {
+    Unit addMrna(String id, Mrna mrna) {
+        if (lookup(mrnas, id) == Nothing)
+            mrnas = put(mrnas, id, list[]);
         List<Mrna> li = lookupUnsafe(mrnas, id);
         li = appendright(li, mrna);
         mrnas = put(mrnas, id, li);
@@ -74,7 +74,7 @@ class Cell implements Cell {
         println("New Protein " + proteinID(prot) + " (" + toString(length(proteins)) + ")");
     }
 
-    Int getQuantProtein() {
+    Int getSumProtein() {
         await length(proteins) > 0;
         return length(proteins);
     }
@@ -82,14 +82,36 @@ class Cell implements Cell {
         assert length(proteins) > 0;
         proteins = tail(proteins);
     }
+
     Int getQuantMrna(String id) {
+        await lookup(mrnas, id) != Nothing;
         await length(lookupUnsafe(mrnas, id)) > 0;
         return length(lookupUnsafe(mrnas, id));
     }
-    Unit removeMrna(String id) {
-        if (length(lookupUnsafe(mrnas, id)) > 0) {
-            mrnas = put(mrnas, id, tail(lookupUnsafe(mrnas, id)));
+    Int getSumMrna() {
+        List<String> keys = elements(keys(mrnas));
+        Int sum = 0;
+        while(! isEmpty(keys)) {
+            String id = head(keys);
+            keys = tail(keys);
+            sum = sum + length(lookupUnsafe(mrnas, id));
         }
+        return sum;
+    }
+    String getInfoMrna() {
+        List<String> keys = elements(keys(mrnas));
+        String s = "";
+        while(! isEmpty(keys)) {
+            String id = head(keys);
+            s = s + id + "(" + toString(length(lookupUnsafe(mrnas, id))) + ") ";
+            keys = tail(keys);
+        }
+        return s;
+    }
+
+    Unit removeMrna(String id) {
+        await length(lookupUnsafe(mrnas, id)) > 0;
+        mrnas = put(mrnas, id, tail(lookupUnsafe(mrnas, id)));
     }
     Int getQuantRibosome() {
         return size(ribosomes);
@@ -99,28 +121,16 @@ class Cell implements Cell {
     /****************************************************************
      *** HTTP Callables ***
      */
-    Pair<Time,Int> getMrnaInfo() {
-        return Pair(now(), 0 /* FIXME length(mrnaStrands) */);
-    }
-    Pair<Time,Int> getProtInfo() {
-        return Pair(now(), 0 /* FIXME length(proteins) */);
-    }
-    Pair<Time,Int> getRiboInfo() {
-        return Pair(now(), size(ribosomes));
-    }
     /***************************************************************/
 
     // Randomly return one of the mRNA strands for decoding
     Mrna getMrna() {
+        await(size(keys(mrnas)) > 0);
         List<String> keys = elements(keys(mrnas));
-        // FIXME can the list be empty?
-
         String id = nth(keys, random(length(keys)));
         await length(lookupUnsafe(mrnas, id)) > 0;
         Int n = random(length(lookupUnsafe(mrnas, id)));
         Mrna mrna = nth(lookupUnsafe(mrnas, id), n);
-        //String s = await mrna!toString();
-        //println("Cell: offering mRNA: " + s);
         return mrna;
     }
 }
