@@ -8,6 +8,11 @@ def Process scheduler1(List<Process> queue) = nth(queue, random(length(queue)));
 
 /*
 TODO: Implement scheduler that follows Gillespie algorithm
+Problem: currently schedulers have no access to object fields
+
+But we can still implement a function that takes the necessary information via arguments.
+Later we can change this function to work as a scheduler function.
+
 
    def Process gscheduler(List<Process> queue) =
 
