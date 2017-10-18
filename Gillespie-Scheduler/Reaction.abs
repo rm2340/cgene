@@ -1,0 +1,97 @@
+module Reaction;
+export Reaction;
+import * from Simulation;
+import * from Cell;
+
+interface Reaction {
+    Unit addReactant(Substance r, Int n);
+    Unit addProduct(Substance p, Int n);
+    Unit setRate(Rat f);
+    Rat getRate();
+    Unit setID(String s);
+    String toString();
+    Unit occur();
+    Unit run();
+}
+
+/*
+ * Reaction
+ *      multiset of reactants -> multiset of products
+ *      A reaction gets its reactants from and releases its products into the environment (Substrate)
+ *      The rate (factor) is intrinsic to a particular reaction and determines the reaction speed
+ */
+class Reaction(String id, Cell cell, Rat rate,
+                Map<Substance,Int> reactants,
+                Map<Substance,Int> products) implements Reaction {
+
+    /* These maps determine the substances and quantities that are consumed/produced
+     * when the reaction occurs.
+     */
+    Unit addReactant(Substance r, Int n) {
+        reactants = insert(reactants, Pair(r, n));
+    }
+    Unit addProduct(Substance p, Int n) {
+        products = insert(products, Pair(p, n));
+    }
+    Unit setRate(Rat f) {
+        rate = f;
+    }
+    Rat getRate() {
+        return rate;
+    }
+
+    Unit occur() {
+        //consume + produce
+        Bool can = await cell!consumeSubstances(reactants);
+        if (can)
+            await cell!produceSubstances(products);
+
+        // log
+        //await cell!logRate(id, currentRate);
+    }
+
+    Unit run() {
+        while (True) {
+            this.occur();
+            println(this.id);
+        }
+    }
+
+    Unit setID(String s) {
+        this.id = s;
+    }
+
+    String toString() {
+        String res = "";
+        Set<Substance> subst = keys(reactants);
+
+        String plus = "";
+        while (hasNext(subst)) {
+            Substance s = take(subst);
+            subst = remove(subst, s);
+            Int q = lookupUnsafe(reactants, s);
+            if (q > 1) {
+                res = res + toString(q);
+            }
+            res = res + plus;
+            res = res + name(s);
+            plus = "+";
+        }
+        res = res + "--" + toString(rate) + "->";
+        subst = keys(products);
+        plus = "";
+        while (hasNext(subst)) {
+            Substance s = take(subst);
+            subst = remove(subst, s);
+            Int q = lookupUnsafe(products, s);
+            if (q > 1) {
+                res = res + toString(q);
+            }
+            res = res + plus;
+            res = res + name(s);
+            plus = "+";
+        }
+        return res;
+    }
+}
+

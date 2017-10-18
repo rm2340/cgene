@@ -1,0 +1,76 @@
+module Cell;
+export Substance, name, Cell;
+import * from Reaction;
+
+
+data Substance = Substance(String name);
+
+interface Cell {
+    Unit addReaction(String id,
+            Cell cell,
+            Rat rate,
+            Map<Substance,Int> reactants,
+            Map<Substance,Int> products);
+
+    Bool consumeSubstances(Map<Substance, Int> consumption);
+    Unit produceSubstances(Map<Substance, Int> production);
+}
+
+class Cell(Map<Substance, Int> substances) implements Cell {
+
+    Unit addReaction(String id,
+                Cell cell,
+                Rat rate,
+                Map<Substance,Int> reactants,
+                Map<Substance,Int> products) {
+        Reaction r = new local Reaction(id, cell, rate, reactants, products);
+    }
+
+    Bool consumeSubstances(Map<Substance, Int> consumption) {
+        Bool success = False;
+        Set<Substance> availableSubstances = keys(substances);
+	    Set<Substance> requiredSubstances = keys(consumption);
+
+        // Test if every required substance exists in the required quantity
+	    Bool continue = True;
+	    while (hasNext(requiredSubstances) && continue) {
+	        Substance s = take(requiredSubstances);
+	        requiredSubstances = remove(requiredSubstances, s);
+	        Int q = lookupUnsafe(consumption, s);
+            Int availableQuantity = lookupUnsafe(substances, s);
+            if (q > availableQuantity) {
+                continue = False;
+            }
+	    }
+
+	    if (continue) {
+		    // Consume the substances
+		    Set<Substance> consumedSubstances = keys(consumption);
+		    while (hasNext(consumedSubstances)) {
+		        Substance s = take(consumedSubstances);
+		        consumedSubstances = remove(consumedSubstances, s);
+		        Int q = lookupUnsafe(consumption, s);
+		        Int availableQuantity = lookupUnsafe(substances, s);
+		        substances = put(substances, s, availableQuantity - q);
+		    }
+		    success = True;
+		} else {
+		    success = False;
+		}
+		return success;
+    }
+
+    Unit produceSubstances(Map<Substance, Int> production) {
+        Set<Substance> producedSubstances = keys(production);
+        while (hasNext(producedSubstances)) {
+            Substance s = take(producedSubstances);
+            producedSubstances = remove(producedSubstances, s);
+            Int q = lookupUnsafe(production, s);
+            Int availableQuantity = lookupUnsafe(substances, s);
+            substances = put(substances, s, availableQuantity + q);
+        }
+    }
+
+}
+
+
