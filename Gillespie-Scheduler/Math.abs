@@ -1,0 +1,16 @@
+module MathAux;
+export log;
+export randomZeroOne;
+import * from ABS.StdLib;
+
+// logarithm function
+def Rat log(Rat x) =
+    2 * log_helper((x-1)/(x+1), 0, 1);
+
+def Rat log_helper(Rat x, Rat c, Int i) =
+        if i > 100 then c
+        else
+        log_helper(x, c + pow(x,i)/i, i+2);
+
+def Rat randomZeroOne(Int max) = (random(max-2)+1)/max; // Try to avoid 0 and 1
+
