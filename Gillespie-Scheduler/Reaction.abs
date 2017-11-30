@@ -11,7 +11,10 @@ interface Reaction {
     Unit setID(String s);
     String toString();
     Unit occur();
-    Unit run();
+   // Unit run();
+    
+    Rat getPropensity();
+    
 }
 
 /*
@@ -40,22 +43,36 @@ class Reaction(String id, Cell cell, Rat rate,
         return rate;
     }
 
+    Rat getPropensity(){
+	Rat propensity = rate;
+	Set<Substance> quantReactants = keys(reactants);
+	//if there are no reactants, we do not enter the loop -> rate is returned
+	while (hasNext(quantReactants)) {
+	        Substance s = take(quantReactants);
+	        quantReactants = remove(quantReactants, s);
+	        Int quant = await cell!getSubstanceQuantity(s);
+	        propensity = propensity * quant;
+        }
+        return propensity;
+    }
+    
+    
     Unit occur() {
         //consume + produce
         Bool can = await cell!consumeSubstances(reactants);
         if (can)
             await cell!produceSubstances(products);
 
-        // log
-        //await cell!logRate(id, currentRate);
-    }
 
-    Unit run() {
+}
+
+    // as long as we do not have a gillespie-scheduler, we need to call "occur" explicitly
+  /*  Unit run() {
         while (True) {
             this.occur();
             println(this.id);
         }
-    }
+    } */
 
     Unit setID(String s) {
         this.id = s;
