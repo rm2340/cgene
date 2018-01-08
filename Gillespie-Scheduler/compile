@@ -1,0 +1,4 @@
+#!/bin/bash
+
+rm -rf gen/erlang
+../../bin/bash/absc -v -erlang *.abs -d ./gen/erlang/

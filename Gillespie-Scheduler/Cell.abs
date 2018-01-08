@@ -1,6 +1,7 @@
 module Cell;
 export Substance, name, Cell;
 import * from Reaction;
+import * from MathAux;
 
 
 data Substance = Substance(String name);
@@ -14,9 +15,20 @@ interface Cell {
 
     Bool consumeSubstances(Map<Substance, Int> consumption);
     Unit produceSubstances(Map<Substance, Int> production);
+    
+    Int getSubstanceQuantity(Substance s);
+    
+    //each cell gets a run method
+    Unit exec();
+    
+   
 }
 
 class Cell(Map<Substance, Int> substances) implements Cell {
+
+    List<Reaction> allReactions = Nil;
+    Int quantReactions = 0;
+
 
     Unit addReaction(String id,
                 Cell cell,
@@ -24,8 +36,63 @@ class Cell(Map<Substance, Int> substances) implements Cell {
                 Map<Substance,Int> reactants,
                 Map<Substance,Int> products) {
         Reaction r = new local Reaction(id, cell, rate, reactants, products);
+        allReactions = appendright(allReactions , r);
+        quantReactions = length(allReactions);
+
     }
 
+    
+    //the run method knows about all reactions that can occur and calls them according to Gillespie
+    
+    Unit exec(){
+
+
+      while(True){
+      
+
+	Rat totalProp = 0;
+	Int loopCount = quantReactions;
+	while(loopCount > 0) {
+	  Reaction s = nth(allReactions,loopCount - 1);
+	  Rat addProp = s.getPropensity();
+	  totalProp = totalProp + addProp;
+	  loopCount = loopCount -1;
+	}
+	
+
+	Rat time = -log(randomZeroOne(10000)) / totalProp;
+	
+	//based on another random number we choose the reaction
+
+
+	Rat randProp = randomZeroOne(10000) * totalProp;
+	Rat cumProp = 0; //cumulated Probability up to n
+	loopCount = quantReactions;
+	while(cumProp <= randProp) {
+          Reaction s = nth(allReactions,loopCount - 1);
+	  Rat addProp = s.getPropensity();
+	  cumProp = cumProp + addProp;
+	  loopCount = loopCount - 1;
+	}
+
+
+	nth(allReactions,loopCount).occur();
+	
+	println("Prot: " + toString(nth(values(substances),1)));
+
+
+      }
+    
+    }
+    
+    
+    Int getSubstanceQuantity(Substance s){
+    
+    return lookupUnsafe(substances,s);
+    
+    }
+    
+        
     Bool consumeSubstances(Map<Substance, Int> consumption) {
         Bool success = False;
         Set<Substance> availableSubstances = keys(substances);

@@ -22,19 +22,24 @@ Later we can change this function to work as a scheduler function.
 
 // ******************** Main block ******************************
 {
-
+   
     // create substances
     Substance mrna = Substance("mRNA");
     Substance prot = Substance("Protein");
 
     // create cell substrate
-    [Scheduler: scheduler1(queue)] Cell cell = new Cell(map[Pair(mrna,100), Pair(prot,0)]);
+    //[Scheduler: scheduler1(queue)] Cell cell = new Cell(map[Pair(mrna,100), Pair(prot,0)]);
 
+    Cell cell = new Cell(map[Pair(mrna,100), Pair(prot,0)]);
+    
+       
     // add reactions to cell
-    await cell!addReaction("Translation", cell, 1, map[Pair(mrna,1)], map[Pair(mrna,1), Pair(prot,1)]);
-    await cell!addReaction("Transcription", cell, 1, map[], map[Pair(mrna,1)]);
-    await cell!addReaction("mRNA Degradation", cell, 1, map[Pair(mrna,1)], map[]);
-    await cell!addReaction("Protein Degradation", cell, 1, map[Pair(prot,1)], map[]);
-
-
+    cell.addReaction("Translation", cell, 1, map[Pair(mrna,1)], map[Pair(mrna,1), Pair(prot,1)]);
+    cell.addReaction("Transcription", cell, 1, map[], map[Pair(mrna,1)]);
+    cell.addReaction("mRNA Degradation", cell, 1, map[Pair(mrna,1)], map[]);
+    cell.addReaction("Protein Degradation", cell, 1, map[Pair(prot,1)], map[]);
+    //If all reactions are defined, we can execute our model. 
+    //Note: using the run() method does not work, since we need to add Reactions, before the Cell-class is supposed to start.
+    
+    cell.exec();
 }
