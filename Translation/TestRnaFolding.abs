@@ -1,0 +1,75 @@
+module TestRna;
+import * from Dna;
+import Rna, Folding from Rna;
+
+
+{
+    Gene ura3 = Gene("URA3", list[
+            A,A,C,C,C,A,A,C,U,G,C,A,C,A,G,A,A,C,A,A,A,A,A,C,C,U,G,C,A,G,G,A,A,A,C,G,A,A,G,A,U,A,A,A,U,C,A,U,G,U,C,G,A,A,A,G,C,U,A,C,
+            A,U,A,U,A,A,G,G,A,A,C,G,U,G,C,U,G,C,U,A,C,U,C,A,U,C,C,U,A,G,U,C,C,U,G,U,U,G,C,U,G,C,C,A,A,G,C,U,A,U,U,U,A,A,U,A,U,C,A,U,
+            G,C,A,C,G,A,A,A,A,G,C,A,A,A,C,A,A,A,C,U,U,G,U,G,U,G,C,U,U,C,A,U,U,G,G,A,U,G,U,U,C,G,U,A,C,C,A,C,C,A,A,G,G,A,A,U,U,A,C,U,
+            G,G,A,G,U,U,A,G,U,U,G,A,A,G,C,A,U,U,A,G,G,U,C,C,C,A,A,A,A,U,U,U,G,U,U,U,A,C,U,A,A,A,A,A,C,A,C,A,U,G,U,G,G,A,U,A,U,C,U,U,
+            G,A,C,U,G,A,U,U,U,U,U,C,C,A,U,G,G,A,G,G,G,C,A,C,A,G,U,U,A,A,G,C,C,G,C,U,A,A,A,G,G,C,A,U,U,A,U,C,C,G,C,C,A,A,G,U,A,C,A,A,
+            U,U,U,U,U,U,A,C,U,C,U,U,C,G,A,A,G,A,C,A,G,A,A,A,A,U,U,U,G,C,U,G,A,C,A,U,U,G,G,U,A,A,U,A,C,A,G,U,C,A,A,A,U,U,G,C,A,G,U,A,
+            C,U,C,U,G,C,G,G,G,U,G,U,A,U,A,C,A,G,A,A,U,A,G,C,A,G,A,A,U,G,G,G,C,A,G,A,C,A,U,U,A,C,G,A,A,U,G,C,A,C,A,C,G,G,U,G,U,G,G,U,
+            G,G,G,C,C,C,A,G,G,U,A,U,U,G,U,U,A,G,C,G,G,U,U,U,G,A,A,G,C,A,G,G,C,G,G,C,G,G,A,A,G,A,A,G,U,A,A,C,A,A,A,G,G,A,A,C,C,U,A,G,
+            A,G,G,C,C,U,U,U,U,G,A,U,G,U,U,A,G,C,A,G,A,A,U,U,G,U,C,A,U,G,C,A,A,G,G,G,C,U,C,C,C,U,A,G,C,U,A,C,U,G,G,A,G,A,A,U,A,U,A,C,
+            U,A,A,G,G,G,U,A,C,U,G,U,U,G,A,C,A,U,U,G,C,G,A,A,G,A,G,C,G,A,C,A,A,A,G,A,U,U,U,U,G,U,U,A,U,C,G,G,C,U,U,U,A,U,U,G,C,U,C,A,
+            A,A,G,A,G,A,C,A,U,G,G,G,U,G,G,A,A,G,A,G,A,U,G,A,A,G,G,U,U,A,C,G,A,U,U,G,G,U,U,G,A,U,U,A,U,G,A,C,A,C,C,C,G,G,U,G,U,G,G,G,
+            U,U,U,A,G,A,U,G,A,C,A,A,G,G,G,A,G,A,C,G,C,A,U,U,G,G,G,U,C,A,A,C,A,G,U,A,U,A,G,A,A,C,C,G,U,G,G,A,U,G,A,U,G,U,G,G,U,C,U,C,
+            U,A,C,A,G,G,A,U,C,U,G,A,C,A,U,U,A,U,U,A,U,U,G,U,U,G,G,A,A,G,A,G,G,A,C,U,A,U,U,U,G,C,A,A,A,G,G,G,A,A,G,G,G,A,U,G,C,U,A,A,
+            G,G,U,A,G,A,G,G,G,U,G,A,A,C,G,U,U,A,C,A,G,A,A,A,A,G,C,A,G,G,C,U,G,G,G,A,A,G,C,A,U,A,U,U,U,G,A,G,A,A,G,A,U,G,C,G,G,C,C,A,
+            G,C,A,A,A,A,C,U,A,A,A,A,A,A,C,U,G,U,A,U,U,A,U,A,A,G,U,A,A,A,U,G,C,A,U,G,U,A,U,A,C,U,A,A,A,C,U,C,A,C,A,A,A,U,U,A,G,A,G,C,
+            U,U,C,A,A,U,U,U,A,A,U,U,A,U,A,U,C,A,G,U,U,A,U,U,A,C,C,C,G,G,G]);
+
+    Gene apt = Gene("A", list[G,G,C,C,U,A,A,A,A,C,A,U,A,C,C,A,G,A,U,C,G,C,C,A,C,C,C,G,C,G,C,U,U,U,A,A,U,C,U,G,G,A,G,A,G,G,U,G,A,A,G,
+            A,A,U,A,C,G,A,C,C,A,C,C,U,A,G,G,C,C]);
+
+    // just for testing (comparison)
+    Gene ura3a = Gene("URA3+apt", list[
+            A,A,C,C,C,A,A,C,U,G,C,A,C,A,G,A,A,C,A,A,A,A,A,C,C,U,G,C,A,G,G,A,A,A,C,G,A,A,G,A,U, /*begin aptamer*/
+            G,G,C,C,U,A,A,A,A,C,A,U,A,C,C,A,G,A,U,C,G,C,C,A,C,C,C,G,C,G,C,U,U,U,A,A,U,C,U,G,G,A,G,A,G,G,U,G,A,A,G,A,A,U,A,C,G,A,C,C,
+            A,C,C,U,A,G,G,C,C, /* end aptamer */
+            A,A,A,U,C,A,U,G,U,C,G,A,A,A,G,C,U,A,C,
+            A,U,A,U,A,A,G,G,A,A,C,G,U,G,C,U,G,C,U,A,C,U,C,A,U,C,C,U,A,G,U,C,C,U,G,U,U,G,C,U,G,C,C,A,A,G,C,U,A,U,U,U,A,A,U,A,U,C,A,U,
+            G,C,A,C,G,A,A,A,A,G,C,A,A,A,C,A,A,A,C,U,U,G,U,G,U,G,C,U,U,C,A,U,U,G,G,A,U,G,U,U,C,G,U,A,C,C,A,C,C,A,A,G,G,A,A,U,U,A,C,U,
+            G,G,A,G,U,U,A,G,U,U,G,A,A,G,C,A,U,U,A,G,G,U,C,C,C,A,A,A,A,U,U,U,G,U,U,U,A,C,U,A,A,A,A,A,C,A,C,A,U,G,U,G,G,A,U,A,U,C,U,U,
+            G,A,C,U,G,A,U,U,U,U,U,C,C,A,U,G,G,A,G,G,G,C,A,C,A,G,U,U,A,A,G,C,C,G,C,U,A,A,A,G,G,C,A,U,U,A,U,C,C,G,C,C,A,A,G,U,A,C,A,A,
+            U,U,U,U,U,U,A,C,U,C,U,U,C,G,A,A,G,A,C,A,G,A,A,A,A,U,U,U,G,C,U,G,A,C,A,U,U,G,G,U,A,A,U,A,C,A,G,U,C,A,A,A,U,U,G,C,A,G,U,A,
+            C,U,C,U,G,C,G,G,G,U,G,U,A,U,A,C,A,G,A,A,U,A,G,C,A,G,A,A,U,G,G,G,C,A,G,A,C,A,U,U,A,C,G,A,A,U,G,C,A,C,A,C,G,G,U,G,U,G,G,U,
+            G,G,G,C,C,C,A,G,G,U,A,U,U,G,U,U,A,G,C,G,G,U,U,U,G,A,A,G,C,A,G,G,C,G,G,C,G,G,A,A,G,A,A,G,U,A,A,C,A,A,A,G,G,A,A,C,C,U,A,G,
+            A,G,G,C,C,U,U,U,U,G,A,U,G,U,U,A,G,C,A,G,A,A,U,U,G,U,C,A,U,G,C,A,A,G,G,G,C,U,C,C,C,U,A,G,C,U,A,C,U,G,G,A,G,A,A,U,A,U,A,C,
+            U,A,A,G,G,G,U,A,C,U,G,U,U,G,A,C,A,U,U,G,C,G,A,A,G,A,G,C,G,A,C,A,A,A,G,A,U,U,U,U,G,U,U,A,U,C,G,G,C,U,U,U,A,U,U,G,C,U,C,A,
+            A,A,G,A,G,A,C,A,U,G,G,G,U,G,G,A,A,G,A,G,A,U,G,A,A,G,G,U,U,A,C,G,A,U,U,G,G,U,U,G,A,U,U,A,U,G,A,C,A,C,C,C,G,G,U,G,U,G,G,G,
+            U,U,U,A,G,A,U,G,A,C,A,A,G,G,G,A,G,A,C,G,C,A,U,U,G,G,G,U,C,A,A,C,A,G,U,A,U,A,G,A,A,C,C,G,U,G,G,A,U,G,A,U,G,U,G,G,U,C,U,C,
+            U,A,C,A,G,G,A,U,C,U,G,A,C,A,U,U,A,U,U,A,U,U,G,U,U,G,G,A,A,G,A,G,G,A,C,U,A,U,U,U,G,C,A,A,A,G,G,G,A,A,G,G,G,A,U,G,C,U,A,A,
+            G,G,U,A,G,A,G,G,G,U,G,A,A,C,G,U,U,A,C,A,G,A,A,A,A,G,C,A,G,G,C,U,G,G,G,A,A,G,C,A,U,A,U,U,U,G,A,G,A,A,G,A,U,G,C,G,G,C,C,A,
+            G,C,A,A,A,A,C,U,A,A,A,A,A,A,C,U,G,U,A,U,U,A,U,A,A,G,U,A,A,A,U,G,C,A,U,G,U,A,U,A,C,U,A,A,A,C,U,C,A,C,A,A,A,U,U,A,G,A,G,C,
+            U,U,C,A,A,U,U,U,A,A,U,U,A,U,A,U,C,A,G,U,U,A,U,U,A,C,C,C,G,G,G]);
+
+
+
+    Folding f_apt = Folding(map[
+            Pair(0,68), Pair(1,67), Pair(2,66), Pair(3,65), Pair(4,64),
+            Pair(13,40), Pair(14,39), Pair(15,38), Pair(16,37), Pair(17,36), Pair(18,35),
+            Pair(19,29), Pair(20,28), Pair(21,27),
+            Pair(43,63), Pair(44,62), Pair(45,61), Pair(46,60), Pair(47,59)
+    ]);
+
+    Rna r1 = new local Rna(ura3);
+    Rna ra = new local Rna(apt);
+    ra.fold(f_apt);
+
+    r1.insert(ra, 41);
+    List<Nucleotide> l1 = r1.getCode();
+    List<Nucleotide> l2 = code(ura3a);
+    println(toString(l1));
+    println(toString(l2));
+    assert l1 == l2;
+
+    r1.insert(ra, 6);
+    r1.insert(ra, 9);
+
+    List<Nucleotide> code = r1.getCode();
+    //println(toString(code));
+}

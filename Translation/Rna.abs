@@ -1,0 +1,113 @@
+module Rna;
+export Rna, Folding, pairs, SecondaryStructure;
+import * from Dna;
+
+
+data Folding = Folding(Map<Int,Int> pairs);
+
+interface Rna {
+    Unit fold(Folding f);
+    Unit insert(Rna newrna, Int pos);
+    String getID();
+    List<Nucleotide> getCode();
+    Folding getFolding();
+}
+
+class Rna(Gene gene) implements Rna {
+    String id = id(gene);
+    List<Nucleotide> code = code(gene);
+    Folding folding = Folding(map[]); // initially no folding
+
+    uses SecondaryStructure;
+
+    // These should be factored out in a trait
+    String getID() {
+        return id;
+    }
+    Folding getFolding() {
+        return folding;
+    }
+    List<Nucleotide> getCode() {
+        return code;
+    }
+}
+
+
+trait SecondaryStructure = {
+
+    Unit fold(Folding f) {
+        folding = f;
+    }
+
+    Unit insert(Rna insertedRna, [Final] Int pos) {
+        List<Nucleotide> oldcode = code;
+        List<Nucleotide> newcode = list[];
+        List<Nucleotide> inscode = await insertedRna!getCode();
+        Int len = length(inscode);
+
+
+        /*
+         ***** 1. Insert Code *****
+         */
+        // copy first <pos> elements
+        // copy inserted code
+        // copy rest of elements
+        Int i = 0;
+        while (i < pos) {
+            newcode = appendright(newcode, head(oldcode));
+            oldcode = tail(oldcode);
+            i = i + 1;
+        }
+        //println(toString(newcode));
+        newcode = concatenate(newcode, inscode);
+        //println(toString(newcode));
+        newcode = concatenate(newcode, oldcode);
+        //println(toString(newcode));
+        // done
+        code = newcode;
+
+        /*
+         ***** 2. Adjust Folding *****
+         */
+        // inserted molecule:
+        Folding fi = await insertedRna!getFolding();
+        Map<Int, Int> insmap = pairs(fi);
+        Map<Int, Int> newmap = map[];
+        List<Int> keys = elements(keys(insmap));
+
+        while (! isEmpty(keys)) {
+            Int k = head(keys);
+            Int v = lookupUnsafe(insmap, k);
+            assert k < v+1;
+            assert lookup(newmap, k+pos) == Nothing;
+            assert lookup(newmap, v+pos) == Nothing;
+            newmap = put(newmap, k+pos, v+pos);
+            keys = tail(keys);
+        }
+        assert length(entries(insmap)) == length(entries(newmap));
+
+        // this molecule:
+        Map<Int, Int> oldmap = pairs(folding);
+        keys = elements(keys(oldmap));
+        while(! isEmpty(keys)) {
+            Int k = head(keys);
+            Int v = lookupUnsafe(oldmap, k);
+            assert k < v+1;
+            if (v >= pos) {
+                v = v+len;
+                if (k >= pos)
+                    k = k+len;
+            }
+            //println("put " + toString(k) + "->" + toString(v));
+            assert lookup(newmap, k) == Nothing;
+            assert lookup(newmap, v) == Nothing;
+            newmap = put(newmap, k, v);
+            keys = tail(keys);
+        }
+        //println(toString(length(entries(newmap))) + ": " + toString(newmap));
+        // done
+        folding = Folding(newmap);
+    }
+
+
+}

@@ -29,6 +29,10 @@ interface Cell {
     Unit removeProtein();
     Unit removeMrna(String id);
     Unit removeRibosomes(Int n);
+
+    Bool consumeATP();
+    Unit setLigand(Int c);
+    Int getLigand();
 }
 
 /*
@@ -41,6 +45,8 @@ class Cell implements Cell {
     //List<Mrna> mrnaStrands = list[];
     List<Protein> proteins = list[];
     Set<Ribosome> ribosomes = set[];
+    Int energy = 500000;
+    Int tc = 0;  // Tc conc., microMol (range 0 ~ 500)
 
     /*
     Unit addMRNA(Mrna mrna) {
@@ -71,11 +77,11 @@ class Cell implements Cell {
 
     Unit addProtein(Protein prot) {
         proteins = appendright(proteins, prot);
-        println("New Protein " + proteinID(prot) + " (" + toString(length(proteins)) + ")");
+        //println(toString(now()) + " New Protein " + proteinID(prot) + " (" + toString(length(proteins)) + ")");
     }
 
     Int getSumProtein() {
-        await length(proteins) > 0;
+        //await length(proteins) > 0; // why wait?
         return length(proteins);
     }
     Unit removeProtein() {
@@ -133,6 +139,22 @@ class Cell implements Cell {
         Mrna mrna = nth(lookupUnsafe(mrnas, id), n);
         return mrna;
     }
+
+    Bool consumeATP() {
+        Bool available = energy > 0;
+        if (available)
+            energy = energy-1;
+        return available;
+    }
+
+    Unit setLigand(Int c) {
+        tc = c;
+    }
+    Int getLigand() {
+        return tc;
+    }
 }
+
+
 
 

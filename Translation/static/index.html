@@ -22,14 +22,32 @@
                 <td>Ribosomes</td>
                 <td>
                     <form id="ribosomes.form">
-                        <input type="text" size="6" id="ribosomes.quant" value="">
+                        <input type="text" size="8" id="ribosomes.quant" value="">
                         <input type="button" id="ribosomes.button" value="Set">
+                    </form>
+                </td>
+            </tr>
+            <tr>
+            <td>Energy</td>
+                <td>
+                    <form id="ribosomes.form">
+                        <input type="text" size="8" id="energy.quant" value="10000">
+                        <input type="button" id="energy.button" value="Set">
                     </form>
                 </td>
             </tr>
             <tr>
                 <td>mRNAs</td>
                 <td><span id="mrnas.info">--</span></td>
+            </tr>
+            <tr>
+                <td>Ligand (&micro;M)</td>
+                <td>
+                    <form id="tetracycline.form">
+                        <input type="text" size="8" id="ligand.quant" value="">
+                        <input type="button" id="ligand.button" value="Set">                
+                    </form>
+                </td>
             </tr>
             <tr>
                 <td>Proteins</td>
@@ -40,7 +58,7 @@
                 <td>
                     <form>
                         <input type="radio" name="degMrna" id="degMrna.off" value="off" checked> Off
-                        <input type="radio" name="degMrna" id="degMrna.on" value="on"> On; &ensp;Rate
+                        <input type="radio" name="degMrna" id="degMrna.on" value="on"> On <br>Rate
                         <input type="text" size="6" id="degMrna.rate" value="">
                         <input type="button" id="degMrna.button" value="Set">
                     </form>
@@ -51,17 +69,18 @@
                 <td>
                     <form>
                         <input type="radio" name="degProt" id="degProt.off" value="off" checked> Off
-                        <input type="radio" name="degProt" id="degProt.on" value="on"> On; &ensp;Rate
+                        <input type="radio" name="degProt" id="degProt.on" value="on"> On <br>Rate
                         <input type="text" size="6" id="degProt.rate" value="">
                         <input type="button" id="degProt.button" value="Set">
                     </form>
                 </td>
             </tr>
-            <tr>
+                
+            <!--<tr>
                 <td>Transcription Rates</td>
                 <td></td>
             </tr>
-            <tr>
+            <tr>-->
                 <td>
                     <form id="info">
                         <input type="button" id="updateInfo.button" value="Update Info">
@@ -82,7 +101,7 @@
             $.when(
                 $.getJSON("call/Model/getTSumMrna"),
                 $.getJSON("call/Model/getTSumProtein"),
-                $.getJSON("call/Model/getTSumRibosome")
+                $.getJSON("call/Model/getTSumRibosome"),
             ).done(function(dataM, dataP, dataR) {
                 // TODO: check for success before stumbling ahead?
 
@@ -154,6 +173,7 @@
 
         document.getElementById("updateInfo.button").addEventListener("click", modelInfo);
         document.getElementById("ribosomes.button").addEventListener("click", setRibosomes);
+        document.getElementById("ligand.button").addEventListener("click", setLigand);
         document.getElementById('degMrna.on').addEventListener("click", setMrnaDeg);
         document.getElementById('degMrna.off').addEventListener("click", setMrnaDeg);
         document.getElementById('degMrna.button').addEventListener("click", setMrnaDeg);
@@ -167,6 +187,12 @@
                 setRibosomes;
             }
         });
+        document.getElementById("ligand.quant").addEventListener("keyup", function(event) {
+            //event.preventDefault();
+            if (event.keyCode == 13) {
+                setTetracycline;
+            }
+        });
 
         function modelInfo() {
             $.when(
@@ -175,13 +201,15 @@
                 $.getJSON("call/Model/getQuantRibosome"),
                 $.getJSON("call/Model/statusDegradationMrna"),
                 $.getJSON("call/Model/statusDegradationProtein"),
+                $.getJSON("call/Model/getLigand"),
 //                $.getJSON("call/Model/statusTranscription"),
 
-            ).done(function(dataM, dataP, dataR, degM, degP) {
+            ).done(function(dataM, dataP, dataR, degM, degP, dataLigand) {
                 // TODO: check for success before stumbling ahead?
                 document.getElementById("mrnas.info").innerHTML = dataM[0].result;
                 document.getElementById("proteins.info").innerHTML = dataP[0].result;
                 document.getElementById("ribosomes.quant").value = dataR[0].result;
+                document.getElementById("tetracycline.quant").value = dataLigand[0].result;
 
                 document.getElementById('degMrna.on').checked = degM[0].result.fst;
                 document.getElementById('degMrna.off').checked = !degM[0].result.fst;
@@ -200,6 +228,11 @@
             $.get("call/Model/setQuantRibosomes?n=" + v);
         }
 
+        function setTetracycline() {
+            var v = document.getElementById("tetracycline.quant").value;
+            $.get("call/Model/setLigand?c=" + v);
+        }
+
         function setMrnaDeg() {
             rate = document.getElementById('degMrna.rate').value;
             rat = new Fraction(rate);
@@ -214,6 +247,7 @@
             $.get("call/Model/setDegradationProt?on=" + on + "&nom=" + rat.n + "&den=" + rat.d);
         }
 
+        
         function createTable(tableData) {
             var table = document.createElement('table');
             var tableBody = document.createElement('tbody');

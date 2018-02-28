@@ -2,6 +2,9 @@ module Simulation;
 import * from Gillespie;
 import * from Reaction;
 import * from ABS.DC;
+import * from ABS.Scheduler;
+
+//def Process randomscheduler(List<Process> queue) = nth(queue, random(length(queue)));
 
 {
     Map<Substance, Int> substances = map[];
@@ -13,7 +16,7 @@ import * from ABS.DC;
     Substance rna = Substance("RNA");
     Substance mrna = Substance("mRNA");
     Substance prot = Substance("Protein");
-    
+
     substances = insert(substances, Pair(mrna, 100));
     substances = insert(substances, Pair(prot, 0));
 
@@ -22,31 +25,31 @@ import * from ABS.DC;
     // ******************** TEST ************************
     Substance a = Substance("A");
     Substance b = Substance("B");
-    
+
     substances = insert(substances, Pair(a, 0));
 //    substances = insert(substances, Pair(b, 0));
     // ******************** TEST ************************
-*/    
-    
+*/
+
     // mRNA -> 0
-    Reaction r1 = new Reaction();
+    [Scheduler: randomscheduler(queue)] Reaction r1 = new Reaction();
     r1.addReactant(mrna, 1);
     r1.setRate(10/3);
 
     // 0 -> mRNA
-    Reaction r2 = new Reaction();
+    [Scheduler: randomscheduler(queue)] Reaction r2 = new Reaction();
     r2.addProduct(mrna, 1);
     r2.setRate(50);
 
     // mRNA -> mRNA + Prot
-    Reaction r3 = new Reaction();
+    [Scheduler: randomscheduler(queue)] Reaction r3 = new Reaction();
     r3.addReactant(mrna, 1);
     r3.addProduct(mrna, 1);
     r3.addProduct(prot, 1);
     r3.setEnergyConsumption(100);
 
     // Prot -> 0
-    Reaction r4 = new Reaction();
+    [Scheduler: randomscheduler(queue)] Reaction r4 = new Reaction();
     r4.addReactant(prot, 1);
 
 /*
@@ -71,7 +74,7 @@ import * from ABS.DC;
     reactions = insertElement(reactions, r4);
 
 
-    
+
     // We use the Speed resource to model energy
     DeploymentComponent cell = new DeploymentComponent("Cell", map[Pair(Speed, 10)]);
     [HTTPName: "env"][DC: cell] Substrate env = new Substrate(substances, reactions);

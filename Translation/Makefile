@@ -1,10 +1,11 @@
+SHELL=/bin/bash -O extglob
 
 JSFILES=static/highcharts.js static/jquery-3.2.1.js static/fraction.js static/index.css
 
 demo: build run			## Build and start demo model (default)
 
 build:				## Build the model
-	absc -erlang *.abs
+	absc -erlang !(Test*).abs
 
 run:				## Start the model
 	cp static/index.html gen/erl/absmodel/priv/

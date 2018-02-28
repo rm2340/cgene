@@ -1,11 +1,12 @@
 module Transcription;
-export Transcription;
+export Transcription, TranscriptionA;
 import * from Dna;
 import * from Mrna;
 import * from Cell;
 
-
 interface Transcription {
+    Mrna genMRNA(Gene gene);
+    //===================
     Unit start();
     Unit stop();
     Bool isOn();
@@ -14,27 +15,50 @@ interface Transcription {
 }
 
 [Far]
-class Transcription([Final] Gene gene, [Final] Cell cell, Rat rate) implements Transcription {
+class TranscriptionA([Final] Gene gene, [Final] Cell cell, Rat rate) implements Transcription {
     Bool run = True;
     uses Control;
 
     Unit run() {
         while(True) {
             await this.run;
-            // TODO: implement the DNA->mRNA transcription process
-            Mrna mrna = new Mrna(id(gene), code(gene));
+            Mrna mrna = this.genMRNA(gene);
             await cell!addMrna(id(gene), mrna);
             duration(1/rate, 1/rate);
+            //println("new mRNA " + toString(id(gene)));
         }
+    }
 
+    Mrna genMRNA(Gene gene) {
+        return new Mrna(gene);
     }
 
 }
 
+[Far]
+class Transcription([Final] Gene gene, [Final] Cell cell, Rat rate) implements Transcription {
+/* TODO
+   Implement more realistic/detailed DNA-mRNA transcription:
+   - protein transcription factors bind to promoter sites, usually on the 5′ side of the gene
+   - RNA polymerase (enzyme), binds to the complex of transcription factors
+   - Working together, they open the DNA double helix
+   - RNA polymerase proceeds to "read" one strand moving in its 3′ → 5′ direction
+   - As the RNA polymerase travels along the DNA strand, it assembles ribonucleotides into a strand of RNA
+   - Each ribonucleotide is inserted into the growing RNA strand following the rules of base pairing.
 
-/* Abstract transcription simulation by generating random mRNA strands of given length.
- * Corresponds to reaction: 0 -> mRNA (constant rate)
+ * from: http://www.biology-pages.info/T/Transcription.html
  */
+    Bool run = True;
+    uses Control;
+    Unit run() {}
+
+    Mrna genMRNA(Gene gene) {
+        return new Mrna(gene);
+    }
+}
+
+
+
 [Far]
 class TranscriptionRandom([Final] Cell cell, Rat rate) implements Transcription {
     Bool run = True;
@@ -42,16 +66,20 @@ class TranscriptionRandom([Final] Cell cell, Rat rate) implements Transcription 
 
     Unit run() {
         while(True) {
-            Mrna mrna = this.genMRNA(1000);
+            Mrna mrna = this.genMRNA(Gene("", list[]));
             await cell!addMrna("Random", mrna);
             duration(1/rate, 1/rate);
         }
     }
 
+    Mrna genMRNA(Gene gene) {
+        return this.randMRNA(1000);
+    }
+
     /*
      * Generate random mRNA molecule of length len codons
      */
-    Mrna genMRNA(Int len) {
+    Mrna randMRNA(Int len) {
         // We build the list starting from the end (more efficient)
         // first, a stop codon
         List<Nucleotide> code = list[U, A, A];
@@ -77,7 +105,7 @@ class TranscriptionRandom([Final] Cell cell, Rat rate) implements Transcription 
 
         assert length(code) == 3*(len+2);
         println("mRNA list generated, length=" + toString(length(code)));
-        return new Mrna("Random", code);
+        return new Mrna(Gene("Random", code));
     }
 
 }

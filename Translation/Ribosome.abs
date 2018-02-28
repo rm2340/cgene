@@ -8,6 +8,8 @@ import * from Protein;
 interface Ribosome {
     Unit run();
     Unit stop();
+    Unit setSpeed(Pair<Int,Int> s);
+    Cell getCell();
 }
 
 
@@ -15,6 +17,9 @@ interface Ribosome {
  * synthesizing protein from mRNA
  */
 class Ribosome([Final] Cell cell) implements Ribosome {
+    // default rate of translation (bases/second) - can be set via setSpeed
+    // http://bionumbers.hms.harvard.edu/bionumber.aspx?&id=100059
+    Pair<Int,Int> speed = Pair(12,21);
 
     Bool run = True;
     Bool attached = False;
@@ -22,11 +27,14 @@ class Ribosome([Final] Cell cell) implements Ribosome {
     Int position = -1; // The ribosome's current position on the mRNA strand
     String mrnaID = ""; // The mRNA's name (id)
 
+    Cell getCell() { return cell; }
+
+
     Unit run() {
         while (run) {
             /* Try to obtain mRNA; if successful,
              *     attach to mRNA,
-             *     scan for start codon
+             *     scan 5'UTR for start codon
              *     decode mRNA (codon by codon),
              *     detach upon encountering stop codon
              */
@@ -35,8 +43,14 @@ class Ribosome([Final] Cell cell) implements Ribosome {
             position = 0;
             if (attached) {
                 mrnaID = await mrna!getID();
-                this.scan(mrna);
-                this.decode(mrna);
+                Bool can = this.scan(mrna);
+                if (can)
+                    this.decode(mrna);
+                else {
+                    // can't advance due to secondary structure
+                    await mrna!detach(this, position);
+                    println("Ribosome detached at pos " + toString(position));
+                }
             } else {
                 //println("Ribosome failed to attach to mRNA");
             }
@@ -52,18 +66,22 @@ class Ribosome([Final] Cell cell) implements Ribosome {
         run = False;
     }
 
-    /* Look for the start codon
+    /* Scan 5'UTR, look for the start codon
      */
-    Unit scan(Mrna mrna) {
+    Bool scan(Mrna mrna) {
         Bool start = False;
-        while (!start) {
+        Bool canProceed = True;
+        while (canProceed && !start) {
             Nucleotide n = await mrna!readNucleotide(position);
+            canProceed = await mrna!canAdvance(this, position);
             position = await mrna!advance(this, position);
             if (n == A) {
                 n = await mrna!readNucleotide(position);
+                canProceed = await mrna!canAdvance(this, position);
                 position = await mrna!advance(this, position);
                 if (n == U) {
                     n= await mrna!readNucleotide(position);
+                    canProceed = await mrna!canAdvance(this, position);
                     position = await mrna!advance(this, position);
                     if (n == G) {
                         start = True;
@@ -71,6 +89,9 @@ class Ribosome([Final] Cell cell) implements Ribosome {
                 }
             }
         }
+        // arbitrary time to scan the UTR: it has to be > 0, otherwise failure has no visible effect
+        await duration(1, 1);
+        return canProceed;
     }
 
     Unit decode(Mrna mrna) {
@@ -81,24 +102,27 @@ class Ribosome([Final] Cell cell) implements Ribosome {
             // read codon
             //println("position: " + toString(position));
             List<Nucleotide> codon = this.readCodon(mrna);
-            if (stop(codon)) {
+            if (stop(codon)) /* STOP; add protein */ {
                 stop = True;
                 //println("Ribosome stops decoding mrna; at pos " + toString(position));
                 await mrna!detach(this, position);
                 //println("Stop decoding mrna");
                 await cell!addProtein(Protein(mrnaID, aminoacids));
-            } else {
+            } else /* DECODE */ {
                 //print("Codon: " + toString(codon));
                 Aminoacid aa = aminoacid(nth(codon, 0), nth(codon, 1), nth(codon, 2));
                 //println("  --> Aminoacid: " + toString(aa));
                 aminoacids = appendright(aminoacids, aa);
-                Int r = random(20) + 1;
-                await duration(1/r, 1/r); // Rate of translation by the ribosome [http://bionumbers.hms.harvard.edu/bionumber.aspx?id=100059]
+                Int rate = random(snd(speed)-fst(speed)+1) + fst(speed);
+                await duration(1/rate, 1/rate);
                 // Since not a stop codon, assume another codon is following
-                Fut<Int> f = mrna!advance(this, position);
-                position = f.get;
+                position = await mrna!advance(this, position);
 
-                //position = await mrna!advance(this, position);
+                Bool hasATP = await cell!consumeATP();
+                if (! hasATP) { // cell is out of energy
+                    stop = True;
+                    await mrna!detach(this, position);
+                }
             }
          }
     }
@@ -118,6 +142,10 @@ class Ribosome([Final] Cell cell) implements Ribosome {
         codon = appendright(codon, n);
         assert length(codon) == 3;
         return codon;
+    }
+
+    Unit setSpeed(Pair<Int,Int> s) {
+        speed = s;
     }
 
 }

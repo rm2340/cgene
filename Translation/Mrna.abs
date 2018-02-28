@@ -1,39 +1,23 @@
 module Mrna;
-export Mrna, stop;
+export Mrna;
 import * from Dna;
+import * from Rna;
 import * from Ribosome;
+import * from Cell;
 
-
-/* // Would be nice if this would work...
-def Bool stop(List<Nucleotide> codon) =
-    case codon {
-        list[U, A, A] => true;
-        list[U, A, G] => true;
-        list[U, G, A] => true;
-        _ => false;
-    };
-*/
-
-def Bool stop(List<Nucleotide> codon) =
-    case codon {
-        Cons(U, Cons(A, Cons(A, Nil))) => True;
-        Cons(U, Cons(A, Cons(G, Nil))) => True;
-        Cons(U, Cons(G, Cons(A, Nil))) => True;
-        _ => False;
-    };
-
-
-interface Mrna {
+interface Mrna extends Rna {
     Bool attach(Ribosome rib);
     Unit detach(Ribosome rib, Int pos);
+    Bool canAdvance(Ribosome rib, Int pos);
     Int advance(Ribosome rib, Int pos);
-    List<Nucleotide> readCodon(Int pos);
     Nucleotide readNucleotide(Int pos);
-    String getID();
     String toString();
 }
 
-class Mrna([Final] String id, List<Nucleotide> code) implements Mrna {
+class Mrna(Gene gene) implements Mrna {
+    String id = id(gene);
+    List<Nucleotide> code = code(gene);
+    Folding folding = Folding(map[]); // initially no folding
 
     // This map remembers the positions of ribosomes in the mRNA strand
     // Only one ribosome can be at a certain position
@@ -48,23 +32,26 @@ class Mrna([Final] String id, List<Nucleotide> code) implements Mrna {
         }
     }
 
-    /*
-    recover {
-        _ => println("************");
-    }
-    */
+    uses SecondaryStructure;
 
-    /* Attach ribosome at beginning of the strand
+    /* Attach ribosome at beginning of the strand ("ribosomal binding unit")
+     * Ribosome has a certain size, so another ribosome can only attach if the next ribosome is far enough away (~30 nucleotides)
      * Return True if ribosome attached, else False
      */
     Bool attach(Ribosome rib) {
-        Bool success = False;
-        if (lookupUnsafe(occupancy, 0) == Nothing) {
-            occupancy = put(occupancy, 0, Just(rib));
-            success = True;
-            //println("Ribosome attached to mRNA");
+        Bool can = True;
+        [Final] Int riboSize = 30;
+        Int i = 0;
+        while (i < riboSize) {
+            if (lookupUnsafe(occupancy, i) != Nothing) {
+                can = False;
+                i = riboSize; // break
+            }
+            i = i+1;
         }
-        return success;
+        if (can)
+            occupancy = put(occupancy, 0, Just(rib));
+        return can;
     }
 
     Unit detach(Ribosome rib, Int pos) {
@@ -76,7 +63,56 @@ class Mrna([Final] String id, List<Nucleotide> code) implements Mrna {
         //println("Ribosome detached from mRNA");
     }
 
-    // Move the Ribosome rib from position pos to pos+1 (one nucleotide further)
+    /* Determine whether a ribosome can advance past the given position
+     * ...based on existence of secondary structure at pos
+     */
+    Bool canAdvance(Ribosome rib, Int pos1) {
+        Bool can = True;
+        /* FIXME */
+        Cell cell = await rib!getCell();
+        Int ligand = await cell!getLigand();
+        Rat inhib = ligand/10;
+        can = random(100) < 100 - inhib;
+
+        return can;
+    }
+
+    /* Return strength of secondary structure at pos1
+     * - based on total nr of hydrogen bonds at pos1 and following
+     * A-U -> 2
+     * G-C -> 3
+     */
+    Int secondaryStructureStrengthAtPos(Int pos1) {
+        Int bond = 0;
+        Maybe<Int> pos2 = lookup(pairs(folding), pos1);
+        while (isJust(pos2)) {
+            Nucleotide n1 = nth(code, pos1);
+            Nucleotide n2 = nth(code, fromJust(pos2));
+            if (n1 == A) {
+                assert n2 == C;
+                bond = bond + 2;
+            } else if (n1 == C) {
+                assert n2 == A;
+                bond = bond + 2;
+            } else if (n1 == G) {
+                assert n2 == U;
+                bond = bond + 3;
+            } else if (n1 == U) {
+                assert n2 == G;
+                bond = bond + 3;
+            }
+            // assuming there can be no pairing on the last base of the mRNA
+            pos1 = pos1 + 1;
+            pos2 = lookup(pairs(folding), pos1);
+
+            //println(toString(n1) + "--" + toString(n2));
+        }
+        return bond;
+    }
+
+    /* Move the Ribosome rib from position pos to pos+1 (one nucleotide further)
+     *
+     */
     Int advance(Ribosome rib, Int pos) {
         assert pos < length(code) - 1;
         //wait until next position is free
@@ -91,21 +127,12 @@ class Mrna([Final] String id, List<Nucleotide> code) implements Mrna {
         return pos+1;
     }
 
-    // Read codon at position pos
-    List<Nucleotide> readCodon(Int pos) {
-        List<Nucleotide> codon = list[nth(code, pos), nth(code, pos+1), nth(code, pos+2)];
-        return codon;
-    }
-
     Nucleotide readNucleotide(Int pos) {
         assert pos < length(code);
         return nth(code, pos);
     }
 
 
-    String getID() {
-        return id;
-    }
     String toString() {
         return id + ": " + toString(code);
     }
@@ -122,4 +149,14 @@ class Mrna([Final] String id, List<Nucleotide> code) implements Mrna {
         return res;
     }
 
+    // These should be factored out in a trait
+    String getID() {
+        return id;
+    }
+    Folding getFolding() {
+        return folding;
+    }
+    List<Nucleotide> getCode() {
+        return code;
+    }
 }
