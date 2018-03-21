@@ -66,7 +66,8 @@ class Cell implements Cell {
     }
 
     Unit removeRibosomes(Int n) {
-        assert size(ribosomes) >= n;
+        try assert size(ribosomes) >= n;
+        catch AssertionFailException => println("Not enogh ribosomes to remove " + toString(n));
         while(n > 0) {
             Ribosome r = take(ribosomes);
             await r!stop();

@@ -61,14 +61,24 @@ import Rna, Folding from Rna;
     ra.fold(f_apt);
 
     r1.insert(ra, 41);
+
     List<Nucleotide> l1 = r1.getCode();
     List<Nucleotide> l2 = code(ura3a);
-    println(toString(l1));
-    println(toString(l2));
     assert l1 == l2;
 
+    r1.insert(ra, 51);
+    r1.insert(ra, 61);
+    /*
     r1.insert(ra, 6);
     r1.insert(ra, 9);
+    r1.insert(ra, 9);
+    r1.insert(ra, 9);
+    r1.insert(ra, 9);
+    r1.insert(ra, 9);
+    */
+
+    String m = r1.toDotBracket();
+    println(m);
 
     List<Nucleotide> code = r1.getCode();
     //println(toString(code));

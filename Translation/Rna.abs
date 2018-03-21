@@ -1,5 +1,6 @@
 module Rna;
-export Rna, Folding, pairs, SecondaryStructure;
+export Rna, Folding, pairs;
+export RnaGetters, RnaSecondaryStructure;
 import * from Dna;
 
 
@@ -11,6 +12,7 @@ interface Rna {
     String getID();
     List<Nucleotide> getCode();
     Folding getFolding();
+    String toDotBracket();
 }
 
 class Rna(Gene gene) implements Rna {
@@ -18,22 +20,24 @@ class Rna(Gene gene) implements Rna {
     List<Nucleotide> code = code(gene);
     Folding folding = Folding(map[]); // initially no folding
 
-    uses SecondaryStructure;
+    uses RnaGetters;
+    uses RnaSecondaryStructure;
+}
 
-    // These should be factored out in a trait
+
+trait RnaGetters = {
     String getID() {
         return id;
-    }
-    Folding getFolding() {
-        return folding;
     }
     List<Nucleotide> getCode() {
         return code;
     }
+    Folding getFolding() {
+        return folding;
+    }
 }
 
-
-trait SecondaryStructure = {
+trait RnaSecondaryStructure = {
 
     Unit fold(Folding f) {
         folding = f;
@@ -42,13 +46,13 @@ trait SecondaryStructure = {
     Unit insert(Rna insertedRna, [Final] Int pos) {
         List<Nucleotide> oldcode = code;
         List<Nucleotide> newcode = list[];
+        Int lengthOldcode = length(oldcode);
+        try assert pos < lengthOldcode;
+        catch AssertionFailException => println("Cannot insert RNA at pos " + toString(pos));
         List<Nucleotide> inscode = await insertedRna!getCode();
         Int len = length(inscode);
 
-
-        /*
-         ***** 1. Insert Code *****
-         */
+        /****** 1. Insert Code at pos ******/
         // copy first <pos> elements
         // copy inserted code
         // copy rest of elements
@@ -58,17 +62,12 @@ trait SecondaryStructure = {
             oldcode = tail(oldcode);
             i = i + 1;
         }
-        //println(toString(newcode));
         newcode = concatenate(newcode, inscode);
-        //println(toString(newcode));
         newcode = concatenate(newcode, oldcode);
-        //println(toString(newcode));
-        // done
         code = newcode;
+        assert length(newcode) == lengthOldcode + length(inscode);
 
-        /*
-         ***** 2. Adjust Folding *****
-         */
+        /****** 2. Adjust Folding ******/
         // inserted molecule:
         Folding fi = await insertedRna!getFolding();
         Map<Int, Int> insmap = pairs(fi);
@@ -107,7 +106,45 @@ trait SecondaryStructure = {
         //println(toString(length(entries(newmap))) + ": " + toString(newmap));
         // done
         folding = Folding(newmap);
+
+        this.checkFolding();
     }
 
+    // check whether folding is correct, i.e. only G-C and A-U pairs
+    Unit checkFolding() {
+        List<Pair<Int,Int>> pairs = entries(pairs(folding));
+        while(!isEmpty(pairs)) {
+            Pair<Int,Int> p = head(pairs);
+            Nucleotide n1 = nth(code, fst(p));
+            Nucleotide n2 = nth(code, snd(p));
+            try assert validBasePair(n1,n2);
+            catch AssertionFailException => println("Invalid base pair: " + toString(n1) + "-" + toString(n2));
+            pairs = tail(pairs);
+        }
+    }
+
+    String toDotBracket() {
+        String primary = "";
+        String secondary = "";
+        Set<Int> keys = keys(pairs(folding));
+        Set<Int> vals = set[];
+
+        Int pos = 0;
+        String char = "";
+        foreach (n in code) {
+            primary = primary + toString(n);
+            if (contains(keys, pos)) {
+                char = "(";
+                vals = insertElement(vals, lookupUnsafe(pairs(folding), pos));
+                println(toString(pos) + "--" + toString(lookupUnsafe(pairs(folding), pos)));
+            } else if (contains(vals, pos))
+                char = ")";
+            else
+                char = ".";
+            secondary = secondary + char;
+            pos = pos + 1;
+        }
+        return primary + "\n" + secondary;
+    }
 
 }

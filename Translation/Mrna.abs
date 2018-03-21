@@ -32,7 +32,8 @@ class Mrna(Gene gene) implements Mrna {
         }
     }
 
-    uses SecondaryStructure;
+    uses RnaGetters;
+    uses RnaSecondaryStructure;
 
     /* Attach ribosome at beginning of the strand ("ribosomal binding unit")
      * Ribosome has a certain size, so another ribosome can only attach if the next ribosome is far enough away (~30 nucleotides)
@@ -147,16 +148,5 @@ class Mrna(Gene gene) implements Mrna {
             i = i + 1;
         }
         return res;
-    }
-
-    // These should be factored out in a trait
-    String getID() {
-        return id;
-    }
-    Folding getFolding() {
-        return folding;
-    }
-    List<Nucleotide> getCode() {
-        return code;
     }
 }

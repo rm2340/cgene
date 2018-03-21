@@ -1,6 +1,6 @@
 module Dna;
 export Gene, id, code;
-export Nucleotide, A, C, G, U, nuc, stop;
+export Nucleotide, A, C, G, U, nuc, stop, validBasePair;
 
 
 data Gene = Gene(String id, List<Nucleotide> code);
@@ -32,6 +32,26 @@ def Bool stop(List<Nucleotide> codon) =
         Cons(U, Cons(A, Cons(G, Nil))) => True;
         Cons(U, Cons(G, Cons(A, Nil))) => True;
         _ => False;
+    };
+
+def Bool validBasePair(Nucleotide n1, Nucleotide n2) =
+    case n1 {
+        A => case n2 {
+            U => True;
+            _ => False;
+        };
+        U => case n2 {
+            A => True;
+            _ => False;
+        };
+        C => case n2 {
+            G => True;
+            _ => False;
+        };
+        G => case n2 {
+            C => True;
+            _ => False;
+        };
     };
 
 // TODO represent DNA double helix as data (?), use this for transcription.

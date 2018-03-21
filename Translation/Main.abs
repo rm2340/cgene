@@ -138,6 +138,7 @@ class Model([Near] Cell cell, List<Transcription> tscript, List<Degradation> deg
 {
     [HTTPName: "Cell"] Cell cell = new local Cell();
 
+    cell!setLigand(90);
 
     /* URA3 is a gene on chromosome V in Saccharomyces cerevisiae (yeast)
        http://www.yeastgenome.org/locus/S000000747/overview
