@@ -35,6 +35,8 @@ interface Cell {
     Int getLigand();
 }
 
+
+
 /*
  * A cell is essentially a container for the actors (reactants)
  * DNAs, MRNAs, Ribosomes, Proteins, etc

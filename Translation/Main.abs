@@ -138,7 +138,7 @@ class Model([Near] Cell cell, List<Transcription> tscript, List<Degradation> deg
 {
     [HTTPName: "Cell"] Cell cell = new local Cell();
 
-    cell!setLigand(90);
+    cell.setLigand(90);
 
     /* URA3 is a gene on chromosome V in Saccharomyces cerevisiae (yeast)
        http://www.yeastgenome.org/locus/S000000747/overview
@@ -274,13 +274,6 @@ class Model([Near] Cell cell, List<Transcription> tscript, List<Degradation> deg
     Rna tcaptRna = new local Rna(tcapt);
     tcaptRna.fold(folding);
 
-    /**************************************************************************
-     *** Calibration ***
-     **************************************************************************/
-    // Translation rate (10-50 bases/s, http://book.bionumbers.org/how-many-mrnas-are-in-a-cell/)
-    // rate is constant
-    Pair<Int,Int> vT = Pair(10,10);
-
 
     /**************************************************************************
      *** Initial populations ***
@@ -301,7 +294,6 @@ class Model([Near] Cell cell, List<Transcription> tscript, List<Degradation> deg
     i = 0;
     while (i < 300) {
         Ribosome ribo = new Ribosome(cell);
-        await ribo!setSpeed(vT);
         cell.addRibosome(ribo);
         i = i+1;
     }

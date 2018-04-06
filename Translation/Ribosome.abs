@@ -8,7 +8,6 @@ import * from Protein;
 interface Ribosome {
     Unit run();
     Unit stop();
-    Unit setSpeed(Pair<Int,Int> s);
     Cell getCell();
 }
 
@@ -17,10 +16,18 @@ interface Ribosome {
  * synthesizing protein from mRNA
  */
 class Ribosome([Final] Cell cell) implements Ribosome {
-    // default rate of translation (bases/second) - can be set via setSpeed
-    // http://bionumbers.hms.harvard.edu/bionumber.aspx?&id=100059
-    Pair<Int,Int> speed = Pair(12,21);
 
+    /*
+     * Constants
+     */
+    // Translation rate bases/second (constant)
+    // 10-50 bases/s <= http://book.bionumbers.org/how-many-mrnas-are-in-a-cell/
+    // 12-21 bases/s <= http://bionumbers.hms.harvard.edu/bionumber.aspx?&id=100059
+    [Final] Pair<Int,Int> speed = Pair(10,10);
+
+    /*
+     * Variables
+     */
     Bool run = True;
     Bool attached = False;
     Mrna mrna;
@@ -142,10 +149,6 @@ class Ribosome([Final] Cell cell) implements Ribosome {
         codon = appendright(codon, n);
         assert length(codon) == 3;
         return codon;
-    }
-
-    Unit setSpeed(Pair<Int,Int> s) {
-        speed = s;
     }
 
 }
