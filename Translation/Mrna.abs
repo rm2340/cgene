@@ -8,7 +8,6 @@ import * from Cell;
 interface Mrna extends Rna {
     Bool attach(Ribosome rib);
     Unit detach(Ribosome rib, Int pos);
-    Bool canAdvance(Ribosome rib, Int pos);
     Int advance(Ribosome rib, Int pos);
     Nucleotide readNucleotide(Int pos);
     String toString();
@@ -16,119 +15,104 @@ interface Mrna extends Rna {
 
 class Mrna(Gene gene) implements Mrna {
     String id = id(gene);
+    Cell cell; // set it when adding this rna to a cell
     List<Nucleotide> code = code(gene);
     Folding folding = Folding(map[]); // initially no folding
 
     // This map remembers the positions of ribosomes in the mRNA strand
     // Only one ribosome can be at a certain position
-    Map<Int, Maybe<Ribosome>> occupancy = map[];
+    Map<Int, Ribosome> occupancy = map[];
 
     // init block (constructor)
-    {
-        Int i = 0;
-        while(i < length(code)) {
-            occupancy = put(occupancy, i, Nothing);
-            i = i + 1;
-        }
-    }
+    {}
 
     uses RnaGetters;
     uses RnaSecondaryStructure;
 
     /* Attach ribosome at beginning of the strand ("ribosomal binding unit")
-     * Ribosome has a certain size, so another ribosome can only attach if the next ribosome is far enough away (~30 nucleotides)
-     * Return True if ribosome attached, else False
+     * Return True if ribosome could attach, else False
      */
     Bool attach(Ribosome rib) {
-        Bool can = True;
-        [Final] Int riboSize = 30;
-        Int i = 0;
-        while (i < riboSize) {
-            if (lookupUnsafe(occupancy, i) != Nothing) {
-                can = False;
-                i = riboSize; // break
-            }
-            i = i+1;
+        Bool inhib = this.inhibitedBySecondary();
+
+        if (!inhib) {
+            this.waitForSpace(0);
+            occupancy = put(occupancy, 0, rib);
+            assert lookup(occupancy, 0) == Just(rib);
+
+            //print("+++Ribosome " + toString(rib) + " attached to mRNA");
+            //String s = this.occupancyToString();
+            //println(" - Occupancy: " + s);
         }
-        if (can)
-            occupancy = put(occupancy, 0, Just(rib));
-        return can;
+        return !inhib;
     }
 
-    Unit detach(Ribosome rib, Int pos) {
+    /* Wait as long as a ribosome is at and after given pos.
+     * Ribosome has a certain size, so another ribosome can only attach if the next ribosome is
+     * far enough away (here: 30 nucleotides)
+     */
+    Unit waitForSpace([Final] Int pos) {
+        await lookup(occupancy, pos) == Nothing & lookup(occupancy, pos+1) == Nothing & lookup(occupancy, pos+2) == Nothing
+            & lookup(occupancy, pos+3) == Nothing & lookup(occupancy, pos+4) == Nothing & lookup(occupancy, pos+5) == Nothing
+            & lookup(occupancy, pos+6) == Nothing & lookup(occupancy, pos+7) == Nothing & lookup(occupancy, pos+8) == Nothing
+            & lookup(occupancy, pos+9) == Nothing & lookup(occupancy, pos+10) == Nothing & lookup(occupancy, pos+11) == Nothing
+            & lookup(occupancy, pos+12) == Nothing & lookup(occupancy, pos+13) == Nothing & lookup(occupancy, pos+14) == Nothing
+            & lookup(occupancy, pos+15) == Nothing & lookup(occupancy, pos+16) == Nothing & lookup(occupancy, pos+17) == Nothing
+            & lookup(occupancy, pos+18) == Nothing & lookup(occupancy, pos+19) == Nothing & lookup(occupancy, pos+20) == Nothing
+            & lookup(occupancy, pos+21) == Nothing & lookup(occupancy, pos+22) == Nothing & lookup(occupancy, pos+23) == Nothing
+            & lookup(occupancy, pos+24) == Nothing & lookup(occupancy, pos+25) == Nothing & lookup(occupancy, pos+26) == Nothing
+            & lookup(occupancy, pos+27) == Nothing & lookup(occupancy, pos+28) == Nothing & lookup(occupancy, pos+29) == Nothing;
+    }
+
+
+    /* Determine whether a ribosome can attach
+     * based on existence of aptamers and ligand
+     * crude formula... FIXME
+     */
+    Bool inhibitedBySecondary() {
+        Bool can = True;
+
+        Int ss = this.secondaryStructureStrength();
+        Int f = 110; // summand
+        Int n = 495; // factor
+        Int lig = await cell!getLigand(); // ligand conncentration
+
+        Rat inhib = ((ss + f) * lig) / n;
+        can = random(100) < 100 - inhib;
+        //println("Inhibition [0..100+] : " + toString(truncate(inhib)) + " --- Can attach: " + toString(can));
+
+        // return !can;
+        return False;
+    }
+
+
+    Unit detach([Final] Ribosome rib, [Final] Int pos) {
         // assume rib is indeed at pos
-        assert lookupUnsafe(occupancy, pos) == Just(rib);
+        assert lookup(occupancy, pos) == Just(rib);
 
         // clear pos
-        occupancy = put(occupancy, pos, Nothing);
-        //println("Ribosome detached from mRNA");
-    }
-
-    /* Determine whether a ribosome can advance past the given position
-     * ...based on existence of secondary structure at pos
-     */
-    Bool canAdvance(Ribosome rib, Int pos1) {
-        Bool can = True;
-        /* FIXME */
-        Cell cell = await rib!getCell();
-        Int ligand = await cell!getLigand();
-        Rat inhib = ligand/10;
-        can = random(100) < 100 - inhib;
-
-        return can;
-    }
-
-    /* Return strength of secondary structure at pos1
-     * - based on total nr of hydrogen bonds at pos1 and following
-     * A-U -> 2
-     * G-C -> 3
-     */
-    Int secondaryStructureStrengthAtPos(Int pos1) {
-        Int bond = 0;
-        Maybe<Int> pos2 = lookup(pairs(folding), pos1);
-        while (isJust(pos2)) {
-            Nucleotide n1 = nth(code, pos1);
-            Nucleotide n2 = nth(code, fromJust(pos2));
-            if (n1 == A) {
-                assert n2 == C;
-                bond = bond + 2;
-            } else if (n1 == C) {
-                assert n2 == A;
-                bond = bond + 2;
-            } else if (n1 == G) {
-                assert n2 == U;
-                bond = bond + 3;
-            } else if (n1 == U) {
-                assert n2 == G;
-                bond = bond + 3;
-            }
-            // assuming there can be no pairing on the last base of the mRNA
-            pos1 = pos1 + 1;
-            pos2 = lookup(pairs(folding), pos1);
-
-            //println(toString(n1) + "--" + toString(n2));
-        }
-        return bond;
+        occupancy = removeKey(occupancy, pos);
+        //println("---Ribosome detached from mRNA");
     }
 
     /* Move the Ribosome rib from position pos to pos+1 (one nucleotide further)
-     *
+     * note: we don't check for a ribosome beyond the current pos (only upon attachment)
      */
-    Int advance(Ribosome rib, Int pos) {
+    Int advance(Ribosome rib, [Final] Int pos) {
         assert pos < length(code) - 1;
         //wait until next position is free
-        //println("waiting before pos " + toString(pos+1));
-        await(lookupUnsafe(occupancy, pos+1) == Nothing);
+        this.waitForSpace(pos+1);
 
         // clear current pos & move rib to next pos
-        occupancy = put(put(occupancy, pos, Nothing), pos+1, Just(rib));
+        occupancy = put(removeKey(occupancy, pos), pos+1, rib);
 
         //String s = this.occupancyToString();
         //println("Occupancy: " + s);
+
         return pos+1;
     }
 
-    Nucleotide readNucleotide(Int pos) {
+    Nucleotide readNucleotide([Final] Int pos) {
         assert pos < length(code);
         return nth(code, pos);
     }
@@ -139,14 +123,10 @@ class Mrna(Gene gene) implements Mrna {
     }
     String occupancyToString() {
         String res = "";
-        Int i = 0;
-        while(i < size(keys(occupancy))) {
-            if (lookupUnsafe(occupancy, i) == Nothing)
-                res = res + "- ";
-            else
-                res = res + "* ";
-            i = i + 1;
-        }
+
+        List<Int> keys = setToList(keys(occupancy));
+        foreach (k in keys)
+            res = res + toString(k) + " ";
         return res;
     }
 }

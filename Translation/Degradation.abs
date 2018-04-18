@@ -20,11 +20,11 @@ interface Degradation {
 [Far]
 class ProteinDegradation ([Final] Cell cell, Rat rate) implements Degradation {
     Bool run = True;
-    uses RunD;
-    uses ControlD;
+    uses Run;
+    uses Control;
 
     Int getQuantity() {
-        return await cell!getSumProtein();
+        return await cell!getSumProteinGtZero();
     }
     Unit degrade() {
         await cell!removeProtein();
@@ -34,8 +34,8 @@ class ProteinDegradation ([Final] Cell cell, Rat rate) implements Degradation {
 [Far]
 class MrnaDegradation ([Final] Cell cell, String id, Rat rate) implements Degradation {
     Bool run = True;
-    uses RunD;
-    uses ControlD;
+    uses Run;
+    uses Control;
 
     Int getQuantity() {
         return await cell!getQuantMrna(id);
@@ -46,14 +46,16 @@ class MrnaDegradation ([Final] Cell cell, String id, Rat rate) implements Degrad
 }
 
 
-// FIXME: rename trait RunD to Run once the compiler is fixed
-trait RunD = {
+trait Run = {
     Unit run() {
         assert rate > 0;
         while (True) {
             await this.run;
             Int quantity = this.getQuantity();
             assert quantity > 0;
+
+            // try a constant duration...
+            quantity = 1;
             Rat d = 1 / (rate * quantity);
             this.degrade();
             duration(d, d);
@@ -61,7 +63,7 @@ trait RunD = {
     }
 }
 
-trait ControlD = {
+trait Control = {
     Unit start() { run = True; }
     Unit stop() { run = False; }
     Bool isOn() { return run; }

@@ -21,6 +21,7 @@ interface Cell {
     Unit addRibosome(Ribosome ribo);
 
     Int getSumProtein();
+    Int getSumProteinGtZero();
     Int getQuantMrna(String id);
     Int getSumMrna();
     String getInfoMrna();
@@ -60,6 +61,7 @@ class Cell implements Cell {
         List<Mrna> li = lookupUnsafe(mrnas, id);
         li = appendright(li, mrna);
         mrnas = put(mrnas, id, li);
+        await mrna!setCell(this);
     }
 
 
@@ -81,15 +83,20 @@ class Cell implements Cell {
     Unit addProtein(Protein prot) {
         proteins = appendright(proteins, prot);
         //println(toString(now()) + " New Protein " + proteinID(prot) + " (" + toString(length(proteins)) + ")");
+        //println("New protein l=" + toString(length(proteinAminoacids(prot))));
     }
 
     Int getSumProtein() {
-        //await length(proteins) > 0; // why wait?
+        return length(proteins);
+    }
+    Int getSumProteinGtZero() {
+        await length(proteins) > 0; // degradation relies on this
         return length(proteins);
     }
     Unit removeProtein() {
         assert length(proteins) > 0;
         proteins = tail(proteins);
+        //println("Removed 1 protein");
     }
 
     Int getQuantMrna(String id) {

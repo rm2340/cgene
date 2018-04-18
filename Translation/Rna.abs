@@ -2,6 +2,7 @@ module Rna;
 export Rna, Folding, pairs;
 export RnaGetters, RnaSecondaryStructure;
 import * from Dna;
+import * from Cell;
 
 
 data Folding = Folding(Map<Int,Int> pairs);
@@ -10,13 +11,18 @@ interface Rna {
     Unit fold(Folding f);
     Unit insert(Rna newrna, Int pos);
     String getID();
+    Cell getCell();
+    Unit setCell(Cell cell);
     List<Nucleotide> getCode();
     Folding getFolding();
+    Int secondaryStructureStrength();
+    Int secondaryStructureStrengthAtPos(Int pos1);
     String toDotBracket();
 }
 
 class Rna(Gene gene) implements Rna {
     String id = id(gene);
+    Cell cell; // set it when adding this rna to a cell
     List<Nucleotide> code = code(gene);
     Folding folding = Folding(map[]); // initially no folding
 
@@ -26,6 +32,12 @@ class Rna(Gene gene) implements Rna {
 
 
 trait RnaGetters = {
+    Cell getCell() {
+        return cell;
+    }
+    Unit setCell(Cell cell) {
+        this.cell = cell;
+    }
     String getID() {
         return id;
     }
@@ -108,6 +120,64 @@ trait RnaSecondaryStructure = {
         folding = Folding(newmap);
 
         this.checkFolding();
+    }
+
+    /* Calculate an overall value for the secondary structure strength
+     * based on total nr of hydrogen bonds
+     */
+    Int secondaryStructureStrength() {
+        Int bond = 0;
+        Int pos = 0;
+        while (pos < length(code)) {
+            Int b = this.hydrogenBondsAt(pos);
+            bond = bond + b;
+            pos = pos + 1;
+        }
+        return bond;
+    }
+
+    /* Return strength of secondary structure at pos1
+     * based on nr of consecutive hydrogen bonds at pos1 and following
+     */
+    Int secondaryStructureStrengthAtPos(Int pos) {
+        Int bond = 0;
+        Int b = -1;
+        // FIXME avoid reading past the end of molecule
+        while (b != 0) {
+            b = this.hydrogenBondsAt(pos);
+            bond = bond + b;
+            pos = pos + 1;
+        }
+        return bond;
+    }
+
+    /*
+     * Return hydrogen bonds at given position
+     * - either 0, 2, or 3
+     *   A-U -> 2
+     *   G-C -> 3
+     */
+    Int hydrogenBondsAt(Int pos1) {
+        Int bonds = 0;
+        Maybe<Int> pos2 = lookup(pairs(folding), pos1);
+        if (isJust(pos2)) {
+            Nucleotide n1 = nth(code, pos1);
+            Nucleotide n2 = nth(code, fromJust(pos2));
+            if (n1 == A) {
+                assert n2 == U;
+                bonds = 2;
+            } else if (n1 == C) {
+                assert n2 == G;
+                bonds = 2;
+            } else if (n1 == G) {
+                assert n2 == C;
+                bonds = 3;
+            } else if (n1 == U) {
+                assert n2 == A;
+                bonds = 3;
+            }
+        }
+        return bonds;
     }
 
     // check whether folding is correct, i.e. only G-C and A-U pairs

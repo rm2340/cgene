@@ -3,10 +3,12 @@ import * from Cell;
 import * from Dna;
 import * from Rna;
 import * from Mrna;
+import * from Protein;
 import * from Ribosome;
 import * from Transcription;
 import * from Translation;
 import * from Degradation;
+import * from Logger;
 
 
 interface HTTPInterface {
@@ -136,10 +138,6 @@ class Model([Near] Cell cell, List<Transcription> tscript, List<Degradation> deg
  *****************************************************************************/
 
 {
-    [HTTPName: "Cell"] Cell cell = new local Cell();
-
-    cell.setLigand(90);
-
     /* URA3 is a gene on chromosome V in Saccharomyces cerevisiae (yeast)
        http://www.yeastgenome.org/locus/S000000747/overview
        Chr 5 from 116121 to 117051
@@ -242,12 +240,35 @@ class Model([Near] Cell cell, List<Transcription> tscript, List<Degradation> deg
             G,G,C,C,U,A,A,A,A,C,A,U,A,C,C,A,G,A,U,C,G,C,C,A,C,C,C,G,C,G,C,U,U,U,A,A,U,C,U,G,G,A,G,A,G,G,U,G,A,A,G,
             A,A,U,A,C,G,A,C,C,A,C,C,U,A,G,G,C,C]);
 
+
+    /*
+     * The CELL
+     *
+     */
+    [HTTPName: "Cell"] Cell cell = new local Cell();
+
+    // Match to experimental data: cell growth phase starts at around 4h (240 min)
+    // at this point there are around <nprot> proteins in the cell
+    Int i = 0;
+    Int nprot = 1088;
+    while (i < nprot) {
+        await cell!addProtein(Protein("Dummy", list[]));
+        i = i+1;
+    }
+    await duration(240, 240);
+
+
+    /*
+     * Log quantities over time (for plotting)
+     *
+     */
+    new CellResourceLogger(cell);
+
     // Start DNA to mRNA transcription of some genes
     // 0 -> mRNA, rate
     //Transcription ts1 = new TranscriptionA(ura3, cell, 1/50);
     //Transcription ts2 = new TranscriptionA(adh1, cell, 1/3);
     //Transcription ts3 = new TranscriptionA(rrp8, cell, 1/20);
-
 
     // Start degradation
     // Prot -> 0, rate
@@ -255,7 +276,9 @@ class Model([Near] Cell cell, List<Transcription> tscript, List<Degradation> deg
     //Degradation md1 = new MrnaDegradation(cell, id(ura3), 1/50);
     //Degradation md2 = new MrnaDegradation(cell, id(adh1), 1/50);
     //Degradation md3 = new MrnaDegradation(cell, id(rrp8), 1/50);
-    //Degradation pd = new ProteinDegradation(cell, 1/50);
+
+    //Degradation pd = new ProteinDegradation(cell, 73/100); // degrade xx rna per time unit
+    Degradation pd = new ProteinDegradation(cell, 51/100); // degrade xx rna per time unit
 
 
     // TODO
@@ -278,12 +301,16 @@ class Model([Near] Cell cell, List<Transcription> tscript, List<Degradation> deg
     /**************************************************************************
      *** Initial populations ***
      **************************************************************************/
+    cell.setLigand(0);
+
     // Populate cell with mRNAs
     // For yeast under medium to fast growth rates, the number of mRNA was reported to be in the range of 10,000-60,000 per cell
-    Int i = 0;
+    i = 0;
     while(i < 10) {
         Mrna mrna = new Mrna(ura3);
-        await mrna!insert(tcaptRna, 46); // insert aptamer just before start codon
+        // FIXME adjust occupancy when inserting
+        await mrna!insert(tcaptRna, 46); // insert 1 aptamer just before start codon
+        //await mrna!insert(tcaptRna, 46); // insert 1 aptamer
         cell.addMrna(id(ura3), mrna);
         i = i+1;
     }
@@ -306,5 +333,9 @@ class Model([Near] Cell cell, List<Transcription> tscript, List<Degradation> deg
     //[HTTPName: "Model"] HTTPInterface model = new local Model(cell, list[ts1, ts2, ts3], list[md1, md2, md3, pd]);
     [HTTPName: "Model"] HTTPInterface model = new local Model(cell, list[], list[]);
 
+
+    // Add ligand after a while
+    //await duration(300,300);
+    //cell.setLigand(250);
 }
 

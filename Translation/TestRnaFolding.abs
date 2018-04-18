@@ -61,13 +61,20 @@ import Rna, Folding from Rna;
     ra.fold(f_apt);
 
     r1.insert(ra, 41);
+    Int b = r1.secondaryStructureStrength();
+    println("Secondary structure strength: " + toString(b));
 
+    Int p = r1.secondaryStructureStrengthAtPos(40);
+    println("Secondary structure strength at: " + toString(p));
+    p = r1.secondaryStructureStrengthAtPos(41);
+    println("Secondary structure strength at: " + toString(p));
+
+    /*
     List<Nucleotide> l1 = r1.getCode();
     List<Nucleotide> l2 = code(ura3a);
     assert l1 == l2;
+    */
 
-    r1.insert(ra, 51);
-    r1.insert(ra, 61);
     /*
     r1.insert(ra, 6);
     r1.insert(ra, 9);
@@ -77,8 +84,10 @@ import Rna, Folding from Rna;
     r1.insert(ra, 9);
     */
 
+    /*
     String m = r1.toDotBracket();
     println(m);
+    */
 
     List<Nucleotide> code = r1.getCode();
     //println(toString(code));
