@@ -8,8 +8,6 @@ import * from Cell;
 interface Mrna extends Rna {
     Bool attach(Ribosome rib);
     Unit detach(Ribosome rib, Int pos);
-    Int advance(Ribosome rib, Int pos);
-    Nucleotide readNucleotide(Int pos);
     String toString();
 }
 
@@ -19,9 +17,9 @@ class Mrna(Gene gene) implements Mrna {
     List<Nucleotide> code = code(gene);
     Folding folding = Folding(map[]); // initially no folding
 
-    // This map remembers the positions of ribosomes in the mRNA strand
-    // Only one ribosome can be at a certain position
-    Map<Int, Ribosome> occupancy = map[];
+    // Keep track of how many ribosomes are currently decoding
+    // This way we can limit the number of concurrently decoding ribosomes
+    Int ribosomes = 0;
 
     // init block (constructor)
     {}
@@ -36,32 +34,14 @@ class Mrna(Gene gene) implements Mrna {
         Bool inhib = this.inhibitedBySecondary();
 
         if (!inhib) {
-            this.waitForSpace(0);
-            occupancy = put(occupancy, 0, rib);
-            assert lookup(occupancy, 0) == Just(rib);
+            ribosomes = ribosomes + 1;
+            //print(toString(ribosomes) + "  ");
 
             //print("+++Ribosome " + toString(rib) + " attached to mRNA");
             //String s = this.occupancyToString();
             //println(" - Occupancy: " + s);
         }
         return !inhib;
-    }
-
-    /* Wait as long as a ribosome is at and after given pos.
-     * Ribosome has a certain size, so another ribosome can only attach if the next ribosome is
-     * far enough away (here: 30 nucleotides)
-     */
-    Unit waitForSpace([Final] Int pos) {
-        await lookup(occupancy, pos) == Nothing & lookup(occupancy, pos+1) == Nothing & lookup(occupancy, pos+2) == Nothing
-            & lookup(occupancy, pos+3) == Nothing & lookup(occupancy, pos+4) == Nothing & lookup(occupancy, pos+5) == Nothing
-            & lookup(occupancy, pos+6) == Nothing & lookup(occupancy, pos+7) == Nothing & lookup(occupancy, pos+8) == Nothing
-            & lookup(occupancy, pos+9) == Nothing & lookup(occupancy, pos+10) == Nothing & lookup(occupancy, pos+11) == Nothing
-            & lookup(occupancy, pos+12) == Nothing & lookup(occupancy, pos+13) == Nothing & lookup(occupancy, pos+14) == Nothing
-            & lookup(occupancy, pos+15) == Nothing & lookup(occupancy, pos+16) == Nothing & lookup(occupancy, pos+17) == Nothing
-            & lookup(occupancy, pos+18) == Nothing & lookup(occupancy, pos+19) == Nothing & lookup(occupancy, pos+20) == Nothing
-            & lookup(occupancy, pos+21) == Nothing & lookup(occupancy, pos+22) == Nothing & lookup(occupancy, pos+23) == Nothing
-            & lookup(occupancy, pos+24) == Nothing & lookup(occupancy, pos+25) == Nothing & lookup(occupancy, pos+26) == Nothing
-            & lookup(occupancy, pos+27) == Nothing & lookup(occupancy, pos+28) == Nothing & lookup(occupancy, pos+29) == Nothing;
     }
 
 
@@ -87,46 +67,12 @@ class Mrna(Gene gene) implements Mrna {
 
 
     Unit detach([Final] Ribosome rib, [Final] Int pos) {
-        // assume rib is indeed at pos
-        assert lookup(occupancy, pos) == Just(rib);
-
-        // clear pos
-        occupancy = removeKey(occupancy, pos);
+        ribosomes = ribosomes - 1;
         //println("---Ribosome detached from mRNA");
     }
-
-    /* Move the Ribosome rib from position pos to pos+1 (one nucleotide further)
-     * note: we don't check for a ribosome beyond the current pos (only upon attachment)
-     */
-    Int advance(Ribosome rib, [Final] Int pos) {
-        assert pos < length(code) - 1;
-        //wait until next position is free
-        this.waitForSpace(pos+1);
-
-        // clear current pos & move rib to next pos
-        occupancy = put(removeKey(occupancy, pos), pos+1, rib);
-
-        //String s = this.occupancyToString();
-        //println("Occupancy: " + s);
-
-        return pos+1;
-    }
-
-    Nucleotide readNucleotide([Final] Int pos) {
-        assert pos < length(code);
-        return nth(code, pos);
-    }
-
 
     String toString() {
         return id + ": " + toString(code);
     }
-    String occupancyToString() {
-        String res = "";
 
-        List<Int> keys = setToList(keys(occupancy));
-        foreach (k in keys)
-            res = res + toString(k) + " ";
-        return res;
-    }
 }

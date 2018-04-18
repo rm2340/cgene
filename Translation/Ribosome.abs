@@ -24,6 +24,7 @@ class Ribosome([Final] Cell cell) implements Ribosome {
     // 10-50 bases/s <= http://book.bionumbers.org/how-many-mrnas-are-in-a-cell/
     // 12-21 bases/s <= http://bionumbers.hms.harvard.edu/bionumber.aspx?&id=100059
     [Final] Pair<Int,Int> speed = Pair(600,600);
+    List<Nucleotide> codeBuffer = list[];
 
     /*
      * Variables
@@ -50,14 +51,9 @@ class Ribosome([Final] Cell cell) implements Ribosome {
             position = 0;
             if (attached) {
                 mrnaID = await mrna!getID();
-                Bool can = this.scan(mrna);
-                if (can)
-                    this.decode(mrna);
-                else {
-                    // can't advance due to secondary structure
-                    await mrna!detach(this, position);
-                    println("Ribosome detached at pos " + toString(position));
-                }
+                codeBuffer = await mrna!getCode();
+                this.scan(mrna);
+                this.decode(mrna);
             } else {
                 //println("Ribosome failed to attach to mRNA");
                 Rat w = 1 / fst(speed) * 30;
@@ -77,26 +73,23 @@ class Ribosome([Final] Cell cell) implements Ribosome {
 
     /* Scan 5'UTR, look for the start codon
      */
-    Bool scan(Mrna mrna) {
+    Unit scan(Mrna mrna) {
         Bool start = False;
-        Bool canProceed = True;
-        while (canProceed && !start) {
-            Nucleotide n = await mrna!readNucleotide(position);
-            position = await mrna!advance(this, position);
+        while (!start) {
+            Nucleotide n = this.readNucleotide(position);
+            position = position + 1;
             if (n == A) {
-                n = await mrna!readNucleotide(position);
-                position = await mrna!advance(this, position);
+                n = this.readNucleotide(position);
+                position = position + 1;
                 if (n == U) {
-                    n= await mrna!readNucleotide(position);
-                    position = await mrna!advance(this, position);
+                    n= this.readNucleotide(position);
+                    position = position + 1;
                     if (n == G) {
                         start = True;
                     }
                 }
             }
         }
-        // FIXME no point to return a Bool anymore
-        return canProceed;
     }
 
     Unit decode(Mrna mrna) {
@@ -120,14 +113,14 @@ class Ribosome([Final] Cell cell) implements Ribosome {
                 aminoacids = appendright(aminoacids, aa);
                 Int rate = random(snd(speed)-fst(speed)+1) + fst(speed);
                 await duration(1/rate, 1/rate);
-                // Since not a stop codon, assume another codon is following
-                position = await mrna!advance(this, position);
 
+                /*
                 Bool hasATP = await cell!consumeATP();
                 if (! hasATP) { // cell is out of energy
                     stop = True;
                     await mrna!detach(this, position);
                 }
+                */
             }
          }
     }
@@ -135,19 +128,24 @@ class Ribosome([Final] Cell cell) implements Ribosome {
     List<Nucleotide> readCodon(Mrna mrna) {
         List<Nucleotide> codon = list[];
         // #1
-        Nucleotide n = await mrna!readNucleotide(position);
+        Nucleotide n = this.readNucleotide(position);
         codon = appendright(codon, n);
-        position = await mrna!advance(this, position);
         // #2
-        n = await mrna!readNucleotide(position);
+        n = this.readNucleotide(position+1);
         codon = appendright(codon, n);
-        position = await mrna!advance(this, position);
         // #3
-        n = await mrna!readNucleotide(position);
+        n = this.readNucleotide(position+2);
         codon = appendright(codon, n);
+        position = position + 3;
         assert length(codon) == 3;
         return codon;
     }
+
+    Nucleotide readNucleotide([Final] Int pos) {
+        assert pos < length(codeBuffer);
+        return nth(codeBuffer, pos);
+    }
+
 
 }
 

@@ -29,6 +29,8 @@ interface HTTPInterface {
     [HTTPCallable] Pair<Bool, Rat> statusDegradationMrna();
     [HTTPCallable] Pair<Bool, Rat> statusDegradationProtein();
     [HTTPCallable] List<Rat> statusTranscription();
+
+    [HTTPCallable] String time();
 }
 
 class Model([Near] Cell cell, List<Transcription> tscript, List<Degradation> deg) implements HTTPInterface {
@@ -128,6 +130,11 @@ class Model([Near] Cell cell, List<Transcription> tscript, List<Degradation> deg
     Int getLigand() {
         Int c = cell.getLigand();
         return c;
+    }
+
+    String time() {
+        Rat t = timeValue(now());
+        return toString(t) + " = " + toString(truncate(t));
     }
 }
 
