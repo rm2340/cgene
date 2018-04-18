@@ -1,0 +1,47 @@
+module Logger;
+export Logger, CellResourceLogger;
+import * from Cell;
+
+interface Logger {
+    Unit run();
+}
+
+
+class CellResourceLogger([Final] Cell cell) implements Logger {
+
+    Unit run() {
+        this.log();
+    }
+
+    Unit log() {
+        while(True) {
+            Time t = now();
+            //Int mrna = await cell!getQuantMrna();
+            Int prot = await cell!getSumProtein();
+            //Int ribo = await cell!getQuantRibosome();
+            //println("QUANT " + toString(t) + " mRNA " + toString(mrna) + " Protein " + toString(prot) + " Ribosomes " + toString(ribo));
+            //println("QUANT " + toString(timeValue(t)) + " Protein " + toString(prot));
+            println(toString(timeValue(t)) + " " + toString(prot));
+            duration(60, 60); // log interval - adjust as needed
+        }
+    }
+
+}
+
+/*
+interface Info {
+    [HTTPCallable] List<Int> stats();
+}
+
+class CellResourcesInfo(Cell cell) implements Info {
+
+    List<Int> stats() {
+        Int ribo = await cell!getQuantRibosome();
+        Int mrna = await cell!getQuantMrna();
+        Int prot = await cell!getQuantProtein();
+
+        return list[ribo, mrna, prot];
+    }
+}
+
+*/
