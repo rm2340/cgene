@@ -1,13 +1,8 @@
 module Logger;
-export Logger, CellResourceLogger;
+export CellResourceLogger;
 import * from Cell;
 
-interface Logger {
-    Unit run();
-}
-
-
-class CellResourceLogger([Final] Cell cell) implements Logger {
+class CellResourceLogger([Final] Cell cell) {
 
     Unit run() {
         this.log();
@@ -28,20 +23,3 @@ class CellResourceLogger([Final] Cell cell) implements Logger {
 
 }
 
-/*
-interface Info {
-    [HTTPCallable] List<Int> stats();
-}
-
-class CellResourcesInfo(Cell cell) implements Info {
-
-    List<Int> stats() {
-        Int ribo = await cell!getQuantRibosome();
-        Int mrna = await cell!getQuantMrna();
-        Int prot = await cell!getQuantProtein();
-
-        return list[ribo, mrna, prot];
-    }
-}
-
-*/
