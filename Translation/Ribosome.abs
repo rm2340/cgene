@@ -23,7 +23,9 @@ class Ribosome([Final] Cell cell) implements Ribosome {
     // Translation rate bases/minute (constant)
     // 10-50 bases/s <= http://book.bionumbers.org/how-many-mrnas-are-in-a-cell/
     // 12-21 bases/s <= http://bionumbers.hms.harvard.edu/bionumber.aspx?&id=100059
-    [Final] Pair<Int,Int> speed = Pair(600,600);
+    [Final] Rat codonDecodingDuration = 1/10;
+
+    //[Final] Pair<Int,Int> speed = Pair(10,10);
     List<Nucleotide> codeBuffer = list[];
 
     /*
@@ -55,9 +57,9 @@ class Ribosome([Final] Cell cell) implements Ribosome {
                 this.scan(mrna);
                 this.decode(mrna);
             } else {
-                //println("Ribosome failed to attach to mRNA");
-                Rat w = 1 / fst(speed) * 30;
-                await duration(w, w); // failure to attach has a cost...
+                Rat t = codonDecodingDuration * 300;
+                //println("Ribosome failed to attach to mRNA; wait " + toString(w));
+                await duration(t, t); // failure to attach has a cost...
             }
         }
         println("Ribosome retired");
@@ -93,6 +95,7 @@ class Ribosome([Final] Cell cell) implements Ribosome {
     }
 
     Unit decode(Mrna mrna) {
+        Int codonsDecoded = 0;
         //println("Ribosome " + toString(this) + " starts decoding mrna at pos " + toString(position));
         List<Aminoacid> aminoacids = list[];
         Bool stop = False;
@@ -106,14 +109,15 @@ class Ribosome([Final] Cell cell) implements Ribosome {
                 await mrna!detach(this, position);
                 //println("Stop decoding mrna");
                 await cell!addProtein(Protein(mrnaID, aminoacids));
+                Rat t = codonsDecoded * codonDecodingDuration;
+                //println("Stop codon reached, docoding took " + toString(truncate(t)) + " time units");
+                await duration(t,t);
             } else /* DECODE */ {
                 //print("Codon: " + toString(codon));
                 Aminoacid aa = aminoacid(nth(codon, 0), nth(codon, 1), nth(codon, 2));
                 //println("  --> Aminoacid: " + toString(aa));
                 aminoacids = appendright(aminoacids, aa);
-                Int rate = random(snd(speed)-fst(speed)+1) + fst(speed);
-                await duration(1/rate, 1/rate);
-
+                codonsDecoded = codonsDecoded + 1;
                 /*
                 Bool hasATP = await cell!consumeATP();
                 if (! hasATP) { // cell is out of energy

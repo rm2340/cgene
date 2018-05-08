@@ -28,12 +28,13 @@ interface Cell {
     Int getQuantRibosome();
 
     Unit removeProtein();
+    Unit removeProteins(Int n);
     Unit removeMrna(String id);
     Unit removeRibosomes(Int n);
 
     Bool consumeATP();
-    Unit setLigand(Int c);
-    Int getLigand();
+    Unit setLigand(Bool c);
+    Bool getLigand();
 }
 
 
@@ -49,7 +50,7 @@ class Cell implements Cell {
     List<Protein> proteins = list[];
     Set<Ribosome> ribosomes = set[];
     Int energy = 500000;
-    Int tc = 0;  // Tc conc., microMol (range 0 ~ 500)
+    Bool tc = False;  // Tetracycline on/off. We abstract from the actual concentration in microMol (range 0 ~ 500)
 
     /*
     Unit addMRNA(Mrna mrna) {
@@ -97,6 +98,13 @@ class Cell implements Cell {
         assert length(proteins) > 0;
         proteins = tail(proteins);
         //println("Removed 1 protein");
+    }
+    Unit removeProteins(Int n) {
+        Int i = 0;
+        while (i < n) {
+            this.removeProtein();
+            i = i+1;
+        }
     }
 
     Int getQuantMrna(String id) {
@@ -157,10 +165,10 @@ class Cell implements Cell {
         return available;
     }
 
-    Unit setLigand(Int c) {
+    Unit setLigand(Bool c) {
         tc = c;
     }
-    Int getLigand() {
+    Bool getLigand() {
         return tc;
     }
 }

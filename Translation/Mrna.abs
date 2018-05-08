@@ -47,22 +47,24 @@ class Mrna(Gene gene) implements Mrna {
 
     /* Determine whether a ribosome can attach
      * based on existence of aptamers and ligand
-     * crude formula... FIXME
+     * crude formula...
      */
     Bool inhibitedBySecondary() {
         Bool can = True;
+        Bool lig = await cell!getLigand(); // ligand conncentration
 
-        Int ss = this.secondaryStructureStrength();
-        Int f = 110; // summand
-        Int n = 495; // factor
-        Int lig = await cell!getLigand(); // ligand conncentration
+        Int stems = this.secondaryStructureStems();
+        println("Stems " + toString(stems));
 
-        Rat inhib = ((ss + f) * lig) / n;
-        can = random(100) < 100 - inhib;
-        //println("Inhibition [0..100+] : " + toString(truncate(inhib)) + " --- Can attach: " + toString(can));
+        Rat inhib = pow(10/40, stems);
 
-        // return !can;
-        return False;
+        Int rand = random(100);
+        can = rand < 100 * inhib;
+
+        //println("nr " + toString(nr) + "; rand=" + toString(rand) + " <? " + toString(inhib*100) + " => can=" + toString(can));
+
+        return lig && !can;
+        //return False;
     }
 
 

@@ -17,6 +17,7 @@ class CellResourceLogger([Final] Cell cell) {
             //println("QUANT " + toString(t) + " mRNA " + toString(mrna) + " Protein " + toString(prot) + " Ribosomes " + toString(ribo));
             //println("QUANT " + toString(timeValue(t)) + " Protein " + toString(prot));
             println(toString(timeValue(t)) + " " + toString(prot));
+            //println(toString(prot));
             duration(60, 60); // log interval - adjust as needed
         }
     }

@@ -1,0 +1,129 @@
+module Main;
+import * from Cell;
+import * from Dna;
+import * from Rna;
+import * from Mrna;
+import * from Protein;
+import * from Ribosome;
+import * from Transcription;
+import * from Translation;
+import * from Degradation;
+import * from Logger;
+
+interface HTTPInterface {
+
+    [HTTPCallable] Int getQMrna();
+    [HTTPCallable] Int getQProtein();
+    [HTTPCallable] Int getQRibosome();
+
+    [HTTPCallable] Pair<Time,Int> getTQProtein();
+    // TODO: get other items for plotting
+
+    [HTTPCallable] Unit startGrowth();
+    [HTTPCallable] Unit stopGrowth();
+    [HTTPCallable] Unit startTranslation();
+    [HTTPCallable] Unit stopTranslation();
+}
+
+class Model([Near] Cell cell) implements HTTPInterface {
+    Int getQMrna() {
+        return cell.getSumMrna();
+    }
+    Int getQProtein() {
+        return cell.getSumProtein();
+    }
+    Int getQRibosome() {
+        return cell.getQuantRibosome();
+    }
+
+    Pair<Time,Int> getTQProtein() {
+        Int n = this.getQProtein();
+        return Pair(now(), n);
+    }
+
+
+
+}
+
+
+{
+    /* URA3 is a gene on chromosome V in Saccharomyces cerevisiae (yeast)
+       http://www.yeastgenome.org/locus/S000000747/overview
+       Chr 5 from 116121 to 117051
+     */
+    Gene ura3 = Gene("URA3", list[
+            A,A,C,C,C,A,A,C,U,G,C,A,C,A,G,A,A,C,A,A,A,A,A,C,C,U,G,C,A,G,G,A,A,A,C,G,A,A,G,A,U,A,A,A,U,C,A,U,G,U,C,G,A,A,A,G,C,U,A,C,
+            A,U,A,U,A,A,G,G,A,A,C,G,U,G,C,U,G,C,U,A,C,U,C,A,U,C,C,U,A,G,U,C,C,U,G,U,U,G,C,U,G,C,C,A,A,G,C,U,A,U,U,U,A,A,U,A,U,C,A,U,
+            G,C,A,C,G,A,A,A,A,G,C,A,A,A,C,A,A,A,C,U,U,G,U,G,U,G,C,U,U,C,A,U,U,G,G,A,U,G,U,U,C,G,U,A,C,C,A,C,C,A,A,G,G,A,A,U,U,A,C,U,
+            G,G,A,G,U,U,A,G,U,U,G,A,A,G,C,A,U,U,A,G,G,U,C,C,C,A,A,A,A,U,U,U,G,U,U,U,A,C,U,A,A,A,A,A,C,A,C,A,U,G,U,G,G,A,U,A,U,C,U,U,
+            G,A,C,U,G,A,U,U,U,U,U,C,C,A,U,G,G,A,G,G,G,C,A,C,A,G,U,U,A,A,G,C,C,G,C,U,A,A,A,G,G,C,A,U,U,A,U,C,C,G,C,C,A,A,G,U,A,C,A,A,
+            U,U,U,U,U,U,A,C,U,C,U,U,C,G,A,A,G,A,C,A,G,A,A,A,A,U,U,U,G,C,U,G,A,C,A,U,U,G,G,U,A,A,U,A,C,A,G,U,C,A,A,A,U,U,G,C,A,G,U,A,
+            C,U,C,U,G,C,G,G,G,U,G,U,A,U,A,C,A,G,A,A,U,A,G,C,A,G,A,A,U,G,G,G,C,A,G,A,C,A,U,U,A,C,G,A,A,U,G,C,A,C,A,C,G,G,U,G,U,G,G,U,
+            G,G,G,C,C,C,A,G,G,U,A,U,U,G,U,U,A,G,C,G,G,U,U,U,G,A,A,G,C,A,G,G,C,G,G,C,G,G,A,A,G,A,A,G,U,A,A,C,A,A,A,G,G,A,A,C,C,U,A,G,
+            A,G,G,C,C,U,U,U,U,G,A,U,G,U,U,A,G,C,A,G,A,A,U,U,G,U,C,A,U,G,C,A,A,G,G,G,C,U,C,C,C,U,A,G,C,U,A,C,U,G,G,A,G,A,A,U,A,U,A,C,
+            U,A,A,G,G,G,U,A,C,U,G,U,U,G,A,C,A,U,U,G,C,G,A,A,G,A,G,C,G,A,C,A,A,A,G,A,U,U,U,U,G,U,U,A,U,C,G,G,C,U,U,U,A,U,U,G,C,U,C,A,
+            A,A,G,A,G,A,C,A,U,G,G,G,U,G,G,A,A,G,A,G,A,U,G,A,A,G,G,U,U,A,C,G,A,U,U,G,G,U,U,G,A,U,U,A,U,G,A,C,A,C,C,C,G,G,U,G,U,G,G,G,
+            U,U,U,A,G,A,U,G,A,C,A,A,G,G,G,A,G,A,C,G,C,A,U,U,G,G,G,U,C,A,A,C,A,G,U,A,U,A,G,A,A,C,C,G,U,G,G,A,U,G,A,U,G,U,G,G,U,C,U,C,
+            U,A,C,A,G,G,A,U,C,U,G,A,C,A,U,U,A,U,U,A,U,U,G,U,U,G,G,A,A,G,A,G,G,A,C,U,A,U,U,U,G,C,A,A,A,G,G,G,A,A,G,G,G,A,U,G,C,U,A,A,
+            G,G,U,A,G,A,G,G,G,U,G,A,A,C,G,U,U,A,C,A,G,A,A,A,A,G,C,A,G,G,C,U,G,G,G,A,A,G,C,A,U,A,U,U,U,G,A,G,A,A,G,A,U,G,C,G,G,C,C,A,
+            G,C,A,A,A,A,C,U,A,A,A,A,A,A,C,U,G,U,A,U,U,A,U,A,A,G,U,A,A,A,U,G,C,A,U,G,U,A,U,A,C,U,A,A,A,C,U,C,A,C,A,A,A,U,U,A,G,A,G,C,
+            U,U,C,A,A,U,U,U,A,A,U,U,A,U,A,U,C,A,G,U,U,A,U,U,A,C,C,C,G,G,G]);
+
+    // Tetracycline-binding aptamer 32sh
+    Gene tcapt = Gene("32SH", list[
+            G,G,C,C,U,A,A,A,A,C,A,U,A,C,C,A,G,A,U,C,G,C,C,A,C,C,C,G,C,G,C,U,U,U,A,A,U,C,U,G,G,A,G,A,G,G,U,G,A,A,G,
+            A,A,U,A,C,G,A,C,C,A,C,C,U,A,G,G,C,C]);
+
+    /**************************************************************************
+     * The Cell
+     **************************************************************************/
+    [HTTPName: "Cell"] Cell cell = new local Cell();
+
+    // Match to experimental data: cell growth phase starts at around 4h (240 min)
+    // at this point there are around <nprot> proteins in the cell
+    Int i = 0;
+    Int nprot = 393;
+    while (i < nprot) {
+        await cell!addProtein(Protein("Dummy", list[]));
+        i = i+1;
+    }
+    await duration(240, 240);
+
+    /**************************************************************************
+     *** Initial populations ***
+     **************************************************************************/
+    cell.setLigand(True);
+
+    // Populate cell with mRNAs
+    // For yeast under medium to fast growth rates, the number of mRNA was reported to be in the range of 10,000-60,000 per cell
+    i = 0;
+    while(i < 10) {
+        Mrna mrna = new Mrna(ura3);
+        // FIXME adjust occupancy when inserting
+        await mrna!insert(tcaptRna, 46); // insert 1 aptamer just before start codon
+        await mrna!insert(tcaptRna, 46); // insert 1 aptamer
+        await mrna!insert(tcaptRna, 46); // insert 1 aptamer
+        cell.addMrna(id(ura3), mrna);
+        i = i+1;
+    }
+    println("Created " + toString(i) + " " + id(ura3) + " mRNAs " + toString(length(code(ura3))+length(code(tcapt))));
+
+    // Populate cell with ribosomes
+    // Translation of proteins in E. coli is carried out by ~10,000-100,000 ribosomes
+    i = 0;
+    while (i < 500) {
+        Ribosome ribo = new Ribosome(cell);
+        cell.addRibosome(ribo);
+        i = i+1;
+    }
+    println("Created " + toString(i) + " ribosomes");
+
+
+    /*
+     * HTTP Interface
+     */
+    //[HTTPName: "Model"] HTTPInterface model = new local Model(cell, list[ts1, ts2, ts3], list[md1, md2, md3, pd]);
+    [HTTPName: "Model"] HTTPInterface model = new local Model(cell);
+
+
+}

@@ -1,5 +1,5 @@
 module Degradation;
-export Degradation, ProteinDegradation, MrnaDegradation;
+export Degradation, ProteinDegradation, MrnaDegradation, CellGrowthDegradation;
 import * from Cell;
 
 /*
@@ -11,9 +11,8 @@ interface Degradation {
     Unit start();
     Unit stop();
     Bool isOn();
-    Rat getRate();
-    Unit setRate(Rat r);
-    Unit run();
+    //Rat getRate();
+    //Unit setRate(Rat r);
 }
 
 
@@ -30,6 +29,97 @@ class ProteinDegradation ([Final] Cell cell, Rat rate) implements Degradation {
         await cell!removeProtein();
     }
 }
+
+/* We implement cell population growth as a kind of degradation because
+ * we don't need to implement cell division and can focus on simulating one cell only
+ * - The amount of proteins in the cell "degrades" as some move to another cell through cell division
+ *
+ * FIXME: Due to ABS's incredibly slow sqrt function, this is unusable...
+ */
+class CellGrowthDegradationB ([Final] Cell cell) implements Degradation {
+    Bool run = True;
+    uses Control;
+
+    Unit run() {
+        //Cell density - cells per volume - function parameters
+        Rat a =     1338/100000000;
+        Rat b =    48506/100000000;
+        Rat c = 11237576/100000000;
+
+        while(True) {
+            await run == True;
+            Int q = await cell!getSumProtein();
+            Rat t = timeValue(now());
+            println("Now: " + toString(truncate(t)));
+
+            // cell density now
+            Rat den = a*pow(t,2) + b*t + c;
+            //println("Density=" + toString(den) + " " + toString(truncate(den)));
+
+
+            // cell density when q is q-1
+            assert q >= 2;
+            Rat den1 = q*den/(q-1);
+            assert den1 > den;
+
+            // time when we reach the required density
+            Rat sqrt = sqrt_newton(pow(b,2) - 4*a*(c-den1), 1/100, 1/4000);
+            //println("Sqrt: " + toString(sqrt));
+            Rat t1a = (-b + sqrt)/(2*a);
+            //Rat t1b = (-b - sqrt)/(2*a); // negative, ignore
+
+            Rat td = t1a - t;
+            //println("Next time " + toString(truncate(t1a)) + " => wait " + toString(td));
+            println("Next time " + toString(truncate(t1a)));
+
+            await cell!removeProtein();
+
+            assert td >= 0;
+            duration (td,td);
+
+        }
+    }
+}
+
+/* Alternative implementation that computes the number of proteins to degrade per fixed time interval (1)
+ * This should run faster but is potentialliy inaccurate
+ * because we can only degrade a *whole* number of proteins
+ */
+class CellGrowthDegradation ([Final] Cell cell) implements Degradation {
+    Bool run = True;
+    Rat t_inc = 6;
+    uses Control;
+
+    Unit run() {
+        //Cell density - cells per volume - function parameters
+        Rat a = -215503/100000000000000;
+        Rat b =  511020/100000000000;
+        Rat c =  62435/100000000;
+        Rat d =  2/10;
+
+        while(True) {
+            await run == True;
+            Int q = await cell!getSumProtein();
+            Rat t = timeValue(now());
+
+            // cell density now
+            Rat den = a*pow(t,3) + b*pow(t,2) + c*t + d;
+            // cell density at t+1
+            Rat den1 = a*pow(t+t_inc,3) + b*pow(t+t_inc,2) + c*(t+t_inc) + d;
+            //println("now: den=" + toString(den) + "  -->  t+1: den=" + toString(den1));
+
+            // calculate the number of proteins at t+1
+            Rat q1r = (q/den1) * den + 1/2;
+            Int q1 = truncate(q1r);
+            //println("now: q=" + toString(q) + "  -->  t+1: q=" + toString(q1));
+            assert q1 <= q; // Density is growing, at least in the interval we are interested in
+
+            await cell!removeProteins(q - q1);
+            duration (t_inc,t_inc);
+        }
+    }
+}
+
 
 [Far]
 class MrnaDegradation ([Final] Cell cell, String id, Rat rate) implements Degradation {
@@ -67,9 +157,11 @@ trait Control = {
     Unit start() { run = True; }
     Unit stop() { run = False; }
     Bool isOn() { return run; }
+    /*
     Rat getRate() { return rate; }
     Unit setRate(Rat r) {
         if (r > 0)
             this.rate = r;
     }
+    */
 }

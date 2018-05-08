@@ -124,7 +124,7 @@ trait RnaSecondaryStructure = {
 
     /* Calculate an overall value for the secondary structure strength
      * based on total nr of hydrogen bonds
-     */
+
     Int secondaryStructureStrength() {
         Int bond = 0;
         Int pos = 0;
@@ -135,6 +135,51 @@ trait RnaSecondaryStructure = {
         }
         return bond;
     }
+    */
+
+    /* Calculate an overall value for the secondary structure strength
+     * based on total nr of hydrogen bonds in the **stems only**
+     */
+    Int secondaryStructureStrength() {
+        Int strength = 0;
+        Int pos1 = 0;
+        while (pos1 < length(code)) {
+            Maybe<Int> pos2 = lookup(pairs(folding), pos1);
+            if (isJust(pos2)) {
+                //println("Stem at " + toString(pos1) + "--" + toString(fromJust(pos2)));
+                Int st = this.secondaryStructureStrengthAtPos(pos1);
+                strength = strength + st;
+                //println("Strength " + toString(st));
+                // next search will start at pos2+1
+                pos1 = fromJust(pos2) + 1;
+            } else {
+                pos1 = pos1 + 1;
+            }
+        }
+        return strength;
+    }
+
+    /* Calculate the number of secondary structures (aptamers),
+       which is equal to the number of stems
+     */
+    Int secondaryStructureStems() {
+        Int stems = 0;
+        Int pos1 = 0;
+        while (pos1 < length(code)) {
+            Maybe<Int> pos2 = lookup(pairs(folding), pos1);
+            if (isJust(pos2)) {
+                println("Stem at " + toString(pos1) + "--" + toString(fromJust(pos2)));
+                stems = stems + 1;
+                // next search will start at pos2+1
+                pos1 = fromJust(pos2) + 1;
+            } else {
+                pos1 = pos1 + 1;
+            }
+        }
+        return stems;
+    }
+
+
 
     /* Return strength of secondary structure at pos1
      * based on nr of consecutive hydrogen bonds at pos1 and following
@@ -168,13 +213,13 @@ trait RnaSecondaryStructure = {
                 bonds = 2;
             } else if (n1 == C) {
                 assert n2 == G;
-                bonds = 2;
+                bonds = 3;
             } else if (n1 == G) {
                 assert n2 == C;
                 bonds = 3;
             } else if (n1 == U) {
                 assert n2 == A;
-                bonds = 3;
+                bonds = 2;
             }
         }
         return bonds;
