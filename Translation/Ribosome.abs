@@ -6,7 +6,6 @@ import * from Cell;
 import * from Protein;
 
 interface Ribosome {
-    Unit run();
     Unit stop();
     Cell getCell();
 }
@@ -62,7 +61,7 @@ class Ribosome([Final] Cell cell) implements Ribosome {
                 await duration(t, t); // failure to attach has a cost...
             }
         }
-        println("Ribosome retired");
+        //println("***Ribosome retired");
     }
 
     Unit stop() {
@@ -99,7 +98,7 @@ class Ribosome([Final] Cell cell) implements Ribosome {
         //println("Ribosome " + toString(this) + " starts decoding mrna at pos " + toString(position));
         List<Aminoacid> aminoacids = list[];
         Bool stop = False;
-        while(!stop) {
+        while(run && !stop) {
             // read codon
             //println("position: " + toString(position));
             List<Nucleotide> codon = this.readCodon(mrna);

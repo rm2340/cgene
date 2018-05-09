@@ -1,9 +1,9 @@
 module Cell;
 export Cell, setToList;
 import * from Transcription;
+import * from Translation;
 import * from Dna;
 import * from Mrna;
-import * from Ribosome;
 import * from Protein;
 import * from Degradation;
 //import * from Logger;
@@ -17,40 +17,56 @@ def List<A> setToList<A>(Set<A> s) =
 interface Cell {
     Unit addMrna(String id, Mrna mrna);
     Mrna getMrna();
-    Unit addProtein(Protein prot);
-    Unit addRibosome(Ribosome ribo);
-
-    Int getSumProtein();
-    Int getSumProteinGtZero();
     Int getQuantMrna(String id);
     Int getSumMrna();
     String getInfoMrna();
-    Int getQuantRibosome();
+    Unit removeMrna(String id);
 
+    Unit addProtein(Protein prot);
+    Int getSumProtein();
+    Int getSumProteinGtZero();
     Unit removeProtein();
     Unit removeProteins(Int n);
-    Unit removeMrna(String id);
-    Unit removeRibosomes(Int n);
 
-    Bool consumeATP();
     Unit setLigand(Bool c);
     Bool getLigand();
+
+    Bool consumeATP();
+    Translation getTranslation();
+    Unit setTranslation(Translation tl);
+
+    Degradation getGrowth();
+    Unit setGrowth(Degradation g);
 }
 
 
 
 /*
  * A cell is essentially a container for the actors (reactants)
- * DNAs, MRNAs, Ribosomes, Proteins, etc
+ * DNAs, MRNAs, Ribosomes (->managed by Translation object), Proteins, etc
  */
 class Cell implements Cell {
 
     Map<String, List<Mrna>> mrnas = map[];
     //List<Mrna> mrnaStrands = list[];
     List<Protein> proteins = list[];
-    Set<Ribosome> ribosomes = set[];
     Int energy = 500000;
     Bool tc = False;  // Tetracycline on/off. We abstract from the actual concentration in microMol (range 0 ~ 500)
+    Translation translation;
+    Degradation growth;
+
+    Unit setTranslation(Translation tl) {
+        translation = tl;
+    }
+    Translation getTranslation() {
+        return translation;
+    }
+    Unit setGrowth(Degradation g) {
+        growth = g;
+    }
+    Degradation getGrowth() {
+        return growth;
+    }
 
     /*
     Unit addMRNA(Mrna mrna) {
@@ -65,21 +81,6 @@ class Cell implements Cell {
         await mrna!setCell(this);
     }
 
-
-    Unit addRibosome(Ribosome ribo) {
-        ribosomes = insertElement(ribosomes, ribo);
-    }
-
-    Unit removeRibosomes(Int n) {
-        try assert size(ribosomes) >= n;
-        catch AssertionFailException => println("Not enogh ribosomes to remove " + toString(n));
-        while(n > 0) {
-            Ribosome r = take(ribosomes);
-            await r!stop();
-            ribosomes = remove(ribosomes, r);
-            n = n - 1;
-        }
-    }
 
     Unit addProtein(Protein prot) {
         proteins = appendright(proteins, prot);
@@ -136,9 +137,6 @@ class Cell implements Cell {
     Unit removeMrna(String id) {
         await length(lookupUnsafe(mrnas, id)) > 0;
         mrnas = put(mrnas, id, tail(lookupUnsafe(mrnas, id)));
-    }
-    Int getQuantRibosome() {
-        return size(ribosomes);
     }
 
 

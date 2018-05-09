@@ -168,7 +168,7 @@ trait RnaSecondaryStructure = {
         while (pos1 < length(code)) {
             Maybe<Int> pos2 = lookup(pairs(folding), pos1);
             if (isJust(pos2)) {
-                println("Stem at " + toString(pos1) + "--" + toString(fromJust(pos2)));
+                //println("Stem at " + toString(pos1) + "--" + toString(fromJust(pos2)));
                 stems = stems + 1;
                 // next search will start at pos2+1
                 pos1 = fromJust(pos2) + 1;

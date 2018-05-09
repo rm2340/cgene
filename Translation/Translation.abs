@@ -1,20 +1,72 @@
 module Translation;
 export Translation;
-import * from Dna;
+import * from Cell;
+import * from Ribosome;
 
-interface Translation {}
+interface Translation {
+    Int getQRibosome();
+    Unit addRibosome(Ribosome ribo);
+    Unit removeRibosomes(Int n);
+    Unit stop();
+}
 
-class Translation(Gene gene) implements Translation {
+/*
+ * TODO: parametrize translation to a certain RNA (gene) ?
+ */
+class Translation([Final] Cell cell, [Final] Int nribo) implements Translation {
 
-    // init block (constructor)
-    {
-
-
-    }
+    Set<Ribosome> ribosomes = set[];
 
     Unit run() {
-
-
+        await cell!setTranslation(this);
+        this.createRibosomes(nribo);
     }
+
+    /* Populate cell with ribosomes
+     * Translation of proteins in E. coli is carried out by ~10,000-100,000 ribosomes
+     * Ribosomes start translating as soon as they are created
+     */
+    Unit createRibosomes([Final] Int n) {
+        Int i = 0;
+        while (i < n) {
+            Ribosome r = new Ribosome(cell);
+            i = i + 1;
+            ribosomes = insertElement(ribosomes, r);
+        }
+        assert size(ribosomes) == n;
+    }
+
+    Unit addRibosome(Ribosome ribo) {
+        ribosomes = insertElement(ribosomes, ribo);
+    }
+
+    Unit removeRibosomes(Int n) {
+        try assert size(ribosomes) >= n;
+        catch AssertionFailException => println("Not enogh ribosomes to remove " + toString(n));
+        while(n > 0) {
+            Ribosome r = take(ribosomes);
+            r!stop();
+            ribosomes = remove(ribosomes, r);
+            n = n - 1;
+        }
+    }
+
+    Int getQRibosome() {
+        return size(ribosomes);
+    }
+
+    /*
+     * Stop translation by stopping/killing all ribosomes
+     */
+    Unit stop() {
+        while(size(ribosomes) > 0) {
+            Ribosome r = take(ribosomes);
+            await r!stop();
+            //r!stop();
+            ribosomes = remove(ribosomes, r);
+        }
+        println("***Translation stopped");
+    }
+
 }
 

@@ -91,14 +91,14 @@ class CellGrowthDegradation ([Final] Cell cell) implements Degradation {
     uses Control;
 
     Unit run() {
+        await cell!setGrowth(this);
         //Cell density - cells per volume - function parameters
         Rat a = -215503/100000000000000;
         Rat b =  511020/100000000000;
         Rat c =  62435/100000000;
         Rat d =  2/10;
 
-        while(True) {
-            await run == True;
+        while(run) {
             Int q = await cell!getSumProtein();
             Rat t = timeValue(now());
 
@@ -117,6 +117,7 @@ class CellGrowthDegradation ([Final] Cell cell) implements Degradation {
             await cell!removeProteins(q - q1);
             duration (t_inc,t_inc);
         }
+        println("***Cell growth stopped");
     }
 }
 

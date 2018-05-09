@@ -54,7 +54,7 @@ class Mrna(Gene gene) implements Mrna {
         Bool lig = await cell!getLigand(); // ligand conncentration
 
         Int stems = this.secondaryStructureStems();
-        println("Stems " + toString(stems));
+        //println("Stems " + toString(stems));
 
         Rat inhib = pow(10/40, stems);
 
