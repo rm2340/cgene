@@ -1,5 +1,6 @@
 module Degradation;
 export Degradation, ProteinDegradation, MrnaDegradation, CellGrowthDegradation;
+import * from Runnable;
 import * from Cell;
 
 /*
@@ -7,10 +8,7 @@ import * from Cell;
  * based on a given rate and the quantity of the respective reactant
  */
 
-interface Degradation {
-    Unit start();
-    Unit stop();
-    Bool isOn();
+interface Degradation extends Runnable {
     //Rat getRate();
     //Unit setRate(Rat r);
 }
@@ -20,7 +18,7 @@ interface Degradation {
 class ProteinDegradation ([Final] Cell cell, Rat rate) implements Degradation {
     Bool run = True;
     uses Run;
-    uses Control;
+    uses RunnableControl;
 
     Int getQuantity() {
         return await cell!getSumProteinGtZero();
@@ -38,7 +36,7 @@ class ProteinDegradation ([Final] Cell cell, Rat rate) implements Degradation {
  */
 class CellGrowthDegradationB ([Final] Cell cell) implements Degradation {
     Bool run = True;
-    uses Control;
+    uses RunnableControl;
 
     Unit run() {
         //Cell density - cells per volume - function parameters
@@ -87,8 +85,8 @@ class CellGrowthDegradationB ([Final] Cell cell) implements Degradation {
  */
 class CellGrowthDegradation ([Final] Cell cell) implements Degradation {
     Bool run = True;
-    Rat t_inc = 6;
-    uses Control;
+    Rat t_inc = 2;
+    uses RunnableControl;
 
     Unit run() {
         await cell!setGrowth(this);
@@ -112,7 +110,8 @@ class CellGrowthDegradation ([Final] Cell cell) implements Degradation {
             Rat q1r = (q/den1) * den + 1/2;
             Int q1 = truncate(q1r);
             //println("now: q=" + toString(q) + "  -->  t+1: q=" + toString(q1));
-            assert q1 <= q; // Density is growing, at least in the interval we are interested in
+            try assert q1 <= q; // Density is growing, at least in the interval we are interested in
+            catch AssertionFailException => println("WARN Cell growth curve is not realistic at the current time");
 
             await cell!removeProteins(q - q1);
             duration (t_inc,t_inc);
@@ -126,7 +125,7 @@ class CellGrowthDegradation ([Final] Cell cell) implements Degradation {
 class MrnaDegradation ([Final] Cell cell, String id, Rat rate) implements Degradation {
     Bool run = True;
     uses Run;
-    uses Control;
+    uses RunnableControl;
 
     Int getQuantity() {
         return await cell!getQuantMrna(id);
@@ -154,15 +153,3 @@ trait Run = {
     }
 }
 
-trait Control = {
-    Unit start() { run = True; }
-    Unit stop() { run = False; }
-    Bool isOn() { return run; }
-    /*
-    Rat getRate() { return rate; }
-    Unit setRate(Rat r) {
-        if (r > 0)
-            this.rate = r;
-    }
-    */
-}

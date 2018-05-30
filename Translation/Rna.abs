@@ -251,7 +251,7 @@ trait RnaSecondaryStructure = {
             if (contains(keys, pos)) {
                 char = "(";
                 vals = insertElement(vals, lookupUnsafe(pairs(folding), pos));
-                println(toString(pos) + "--" + toString(lookupUnsafe(pairs(folding), pos)));
+                //println(toString(pos) + "--" + toString(lookupUnsafe(pairs(folding), pos)));
             } else if (contains(vals, pos))
                 char = ")";
             else

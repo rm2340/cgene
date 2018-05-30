@@ -1,0 +1,217 @@
+<!DOCTYPE HTML>
+
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Translation</title>
+
+    <script type="text/javascript" src="static/jquery-3.2.1.js"></script>
+    <script type="text/javascript" src="static/highcharts.js"></script>
+    <script type="text/javascript" src="static/highcharts-data.js"></script>
+<!--    <script type="text/javascript" src="static/fraction.js"></script>-->
+    <link rel="stylesheet" type="text/css" href="static/index.css">
+</head>
+
+<body>
+
+    <div id="chart1"></div>
+    <div id="config">
+        <table width="100%">
+            <tr><th colspan="2">Simulation Configuration</th></tr>
+             <tr>
+                 <td>Start Time:</td>
+                 <td><input type="text" size="6" id="cfg.tstart" value=""></td>
+            </tr>
+            <tr>
+                 <td>Stop Time:</td>
+                 <td><input type="text" size="6" id="cfg.tstop" value=""></td>
+            </tr>
+            <tr class="trans">
+                <td>Translation</td>
+                <td><input id="cfg.translation" type="checkbox" checked></td>
+            </tr>
+            <tr>
+                <td>initial Proteins:</td>
+                <td><input type="text" size="6" id="cfg.protein" value=""></td>
+            </tr>
+            <tr>
+                <td>Ribosomes:</td>
+                <td><input type="text" size="6" id="cfg.ribosome" value=""></td>
+            </tr>
+            <tr>
+                <td>mRNAs:</td>
+                <td><input type="text" size="6" id="cfg.mrna" value=""></td>
+            <tr>
+                <td>Aptamers:</td>
+                <td><input type="text" size="6" id="cfg.naptamer" value=""></td>
+            </tr>
+            <tr>
+                <td>Ligand</td>
+                <td><input id="cfg.ligand" type="checkbox" checked></td>
+            </tr>
+            <tr class="grow">
+                <td>Cell growth</td>
+                <td><input id="cfg.growth" type="checkbox" checked></td>
+            </tr>
+            <tr>
+                <th colspan="2"><input type="button" id="cfg.set" value="Set"></th>
+            </tr>
+        </table>
+    </div>
+    <div id="control">
+        <table width="100%">
+            <tr><th colspan="2">Simulation Control</th></tr>
+            <tr>
+                <td id="sim.status">Simulation stopped</td>
+                <td><input type="button" id="sim.start" value="Start"></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><input type="button" id="sim.vizmrna" value="Display mRna"></td>
+            </tr>
+        </table>
+    </div>
+    <div id="dump"></div>
+    
+
+<script>
+    var chart; // global
+    function buildChart() {
+        chart = new Highcharts.Chart('chart1', {
+            chart: {
+                type: 'line',
+                events: { load: getData }
+            },
+            title: {
+                text: 'Translation simulation (single cell)'
+            },
+            yAxis: {
+                title: {
+                    text: 'Quantity'
+                }
+            },
+            series: [{
+                name: "Protein",
+                data: []
+            }]
+        });
+    }
+    
+    function getData() {
+        return $.ajax({
+            url: 'call/Logger/getProteinLog',
+            type: 'GET'
+        });
+    }
+    
+    setInterval(function() { 
+        getData().done(addToChart); 
+    }, 1000);
+    
+    function addToChart(data) {
+        const result = data['result'];
+        Object.keys(result).forEach(function(key) {
+            var k = parseInt(key);
+            var v = result[key];
+            chart.series[0].addPoint([k, v], false, false);
+        });
+        chart.redraw();
+    }
+
+    function startSim() {
+        $.ajax({
+            url: 'call/Model/startSim',
+            type: 'GET'
+        }).done(startStop);
+    }
+
+    function stopSim() {
+        $.ajax({
+            url: 'call/Model/stopSim',
+            type: 'GET'
+        }).done(startStop);
+    }
+    
+    function startStop() {
+        var button = document.getElementById("sim.start");
+        if (button.value == "Start") {
+            button.value = "Stop";
+            button.removeEventListener("click", startSim);
+            button.addEventListener("click", stopSim);
+            document.getElementById("sim.status").innerHTML = "Simulation running";
+        } else { 
+            button.value = "Start";
+            button.removeEventListener("click", stopSim);
+            button.addEventListener("click", startSim);
+            document.getElementById("sim.status").innerHTML = "Simulation stopped";
+        }
+        //button.disabled = true;
+    }
+    document.getElementById("sim.start").addEventListener("click", startSim);
+
+    document.getElementById('sim.vizmrna').addEventListener("click", function() {
+        $.ajax({
+            url: 'call/Model/vizMrna',
+            type: 'GET'
+        }).done(function(data) {
+            document.getElementById('dump').innerHTML = JSON.stringify(data.result);
+        });
+    });
+                                                        
+
+    $(document).ready(function() {
+        getStartConfig();
+        buildChart();
+    });
+
+    function getStartConfig() {
+        $.get('call/Model/getConfig')
+        .done(function(cfg) {
+            document.getElementById("cfg.tstart").value = cfg.result.tStart;
+            document.getElementById("cfg.tstop").value = cfg.result.tStop;
+            document.getElementById("cfg.translation").checked = cfg.result.Translation == 1 ? true : false;
+            document.getElementById("cfg.mrna").value = cfg.result.mRNA;
+            document.getElementById("cfg.protein").value = cfg.result.Protein;
+            document.getElementById("cfg.ribosome").value = cfg.result.Ribosome;
+            document.getElementById("cfg.naptamer").value = cfg.result.nAptamer;
+            document.getElementById("cfg.ligand").checked = cfg.result.Ligand == 1 ? true : false;
+            document.getElementById("cfg.growth").checked = cfg.result.Growth == 1 ? true : false;
+        });
+    }
+    
+    document.getElementById('cfg.set').addEventListener("click", function() {
+        //this.disabled = true;
+        var cfg = [
+            document.getElementById("cfg.tstart").value,
+            document.getElementById("cfg.tstop").value,
+            document.getElementById("cfg.translation").checked == true ? 1 : 0,
+            document.getElementById("cfg.protein").value,
+            document.getElementById("cfg.ribosome").value,
+            document.getElementById("cfg.mrna").value,
+            document.getElementById("cfg.naptamer").value,
+            document.getElementById("cfg.ligand").checked == true ? 1 : 0, 
+            document.getElementById("cfg.growth").checked == true ? 1 : 0 
+        ];
+        $.post("call/Model/setConfig", JSON.stringify({ "cfg": cfg }))
+        .done(function() {
+            console.log("cfg set success");
+        })
+        .fail(function(xhr, status, error) {
+            console.log(JSON.stringify(xhr.responseText));
+        })
+        .always(function() {
+            // not sure why this doesn't enable it back
+            //this.disabled = false;
+        });
+    });
+
+    
+</script>
+    
+</body>
+</html>
+
+
+    
+    

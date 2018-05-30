@@ -1,19 +1,14 @@
 SHELL=/bin/bash -O extglob
 
-JSFILES=static/highcharts.js static/jquery-3.2.1.js static/fraction.js static/index.css
+JSFILES=static/highcharts.js static/highcharts-data.js static/jquery-3.2.1.js static/fraction.js static/index.css
 
-main1: build1 run1		## Build and start demo model (default)
+main: build run		## Build and start demo model (default)
 
-main2: build2 run1		## Build and start demo model (default)
-
-build1:				## Build the model
+build:				## Build the model
 	@absc -erlang Main.abs !(@(Main|Test)*).abs
 
-build2:				## Build the model
-	@absc -erlang Main2.abs !(@(Main|Test)*).abs
-
-run1:				## Start the model
-	@cp static/index.html gen/erl/absmodel/priv/
+run:				## Start the model
+	@cp static/index2.html gen/erl/absmodel/priv/index.html
 	@cp $(JSFILES) gen/erl/absmodel/priv/static
 	@gen/erl/run -p 8080
 

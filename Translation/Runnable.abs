@@ -1,0 +1,19 @@
+module Runnable;
+export Runnable, RunnableControl;
+
+/*
+ * A Runnable is an object than implements some notion of running continuously until stopped
+ */
+
+interface Runnable {
+    Unit start();
+    Unit stop();
+    Bool isOn();
+}
+
+trait RunnableControl = {
+    Unit start() { run = True; }
+    Unit stop() { run = False; }
+    Bool isOn() { return run; }
+}
+

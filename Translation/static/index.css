@@ -1,4 +1,4 @@
-#graph {
+#chart1 {
     padding: 10px;
     margin: 0 auto;
     margin: 1em auto;
@@ -7,13 +7,26 @@
     border: 1px solid black;
 }
 
-#interface {
-    width: 20%;
+#dump {
+    padding: 10px;
+    margin: 0 auto;
+    margin: 1em auto;
+    width:  800px; 
+    height: 400px; 
+    border: 1px solid black;
+    clear: both;
+}
+
+#control, #config {
+    width: 400;
     padding: 0;
     padding-left: 4px;
     margin: 1em auto;
 }
 
+input[type=button] {
+    font-size: 16px;
+}
 
 
 div {
@@ -25,15 +38,26 @@ table {
     border-collapse: collapse;
 }
 
-table, th, td {
+table,th {
     border: 1px solid black;
 }
-
 td {
+    border: 0px;
+}
+td,th {
     padding: 6px;
     text-align: left;
 }
-
 td:first-child {
     text-align: right;
+}
+
+tr.time {
+    background-color: paleturquoise;
+}
+tr.trans {
+    background-color: lightyellow;
+}
+tr.grow {
+    background-color: lightyellow;
 }

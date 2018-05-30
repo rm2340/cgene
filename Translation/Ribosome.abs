@@ -65,11 +65,11 @@ class Ribosome([Final] Cell cell) implements Ribosome {
     }
 
     Unit stop() {
+        run = False;
         if (attached) {
             await mrna!detach(this, position);
             mrna = null;
         }
-        run = False;
     }
 
     /* Scan 5'UTR, look for the start codon

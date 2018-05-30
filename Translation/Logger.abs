@@ -1,26 +1,64 @@
 module Logger;
-export CellResourceLogger;
+export Logger, ProteinLogger, ProteinLoggerStdout;
 import * from Cell;
+import * from Runnable;
 
-class CellResourceLogger([Final] Cell cell) {
+interface Logger extends Runnable {
+    [HTTPCallable] Map<Rat,Int> getProteinLog();
+}
+
+trait Logging = {
+    Unit log() {
+        while(run && timeValue(now()) <= t_stop) {
+            this.logData(t_inc);
+        }
+        println("***Logger stopped");
+    }
+}
+
+
+class ProteinLogger([Final] Cell cell, Int t_inc, Int t_stop) implements Logger {
+
+    Map<Rat,Int> chartData = map[];
+    Bool run = True;
+
+    uses RunnableControl;
+    uses Logging;
 
     Unit run() {
         this.log();
     }
 
-    Unit log() {
-        while(True) {
-            Time t = now();
-            //Int mrna = await cell!getQuantMrna();
-            Int prot = await cell!getSumProtein();
-            //Int ribo = await cell!getQuantRibosome();
-            //println("QUANT " + toString(t) + " mRNA " + toString(mrna) + " Protein " + toString(prot) + " Ribosomes " + toString(ribo));
-            //println("QUANT " + toString(timeValue(t)) + " Protein " + toString(prot));
-            println(toString(timeValue(t)) + " " + toString(prot));
-            //println(toString(prot));
-            duration(60, 60); // log interval - adjust as needed
-        }
+    Unit logData(Int t_inc) {
+        Int n = await cell!getSumProtein();
+        chartData = put(chartData, timeValue(now()), n);
+        await duration(t_inc, t_inc);
     }
 
+    Map<Rat,Int> getProteinLog() {
+        Map<Rat,Int> d = chartData;
+        chartData = map[];
+        return d;
+    }
 }
+
+class ProteinLoggerStdout([Final] Cell cell, Int t_inc, Int t_stop) implements Runnable {
+
+    Bool run = True;
+
+    uses RunnableControl;
+    uses Logging;
+
+    Unit run() {
+        this.log();
+    }
+
+    Unit logData(Int t_inc) {
+        Int n = await cell!getSumProtein();
+        println(toString(timeValue(now())) + " " + toString(n));
+        await duration(t_inc, t_inc);
+
+    }
+}
+
 

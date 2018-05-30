@@ -1,13 +1,13 @@
 module Translation;
 export Translation;
+import * from Runnable;
 import * from Cell;
 import * from Ribosome;
 
-interface Translation {
+interface Translation extends Runnable {
     Int getQRibosome();
     Unit addRibosome(Ribosome ribo);
     Unit removeRibosomes(Int n);
-    Unit stop();
 }
 
 /*
@@ -42,7 +42,7 @@ class Translation([Final] Cell cell, [Final] Int nribo) implements Translation {
 
     Unit removeRibosomes(Int n) {
         try assert size(ribosomes) >= n;
-        catch AssertionFailException => println("Not enogh ribosomes to remove " + toString(n));
+        catch AssertionFailException => println("ERROR Not enough ribosomes to remove " + toString(n));
         while(n > 0) {
             Ribosome r = take(ribosomes);
             r!stop();
@@ -55,6 +55,10 @@ class Translation([Final] Cell cell, [Final] Int nribo) implements Translation {
         return size(ribosomes);
     }
 
+
+    Unit start() {
+        // TODO?
+    }
     /*
      * Stop translation by stopping/killing all ribosomes
      */
@@ -66,6 +70,10 @@ class Translation([Final] Cell cell, [Final] Int nribo) implements Translation {
             ribosomes = remove(ribosomes, r);
         }
         println("***Translation stopped");
+    }
+
+    Bool isOn() {
+        return size(ribosomes) > 0;
     }
 
 }
