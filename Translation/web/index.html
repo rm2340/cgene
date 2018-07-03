@@ -133,18 +133,20 @@
         }).done(startStop);
     }
     
-    function startStop() {
+    function startStop(ret) {
         var button = document.getElementById("sim.start");
         if (button.value == "Start") {
             button.value = "Stop";
             button.removeEventListener("click", startSim);
             button.addEventListener("click", stopSim);
             document.getElementById("sim.status").innerHTML = "Simulation running";
+            document.getElementById('dump').innerText += JSON.stringify(ret.result) + " Simulation started\n";
         } else { 
             button.value = "Start";
             button.removeEventListener("click", stopSim);
             button.addEventListener("click", startSim);
             document.getElementById("sim.status").innerHTML = "Simulation stopped";
+            document.getElementById('dump').innerText += JSON.stringify(ret.result) + " Simulation stopped\n";
         }
         //button.disabled = true;
     }

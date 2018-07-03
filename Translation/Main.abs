@@ -19,8 +19,8 @@ interface Model {
 
     // TODO: get other items for plotting
 
-    [HTTPCallable] Unit startSim();
-    [HTTPCallable] Unit stopSim();
+    [HTTPCallable] Float startSim();
+    [HTTPCallable] Float stopSim();
 
     [HTTPCallable] Map<String,Int> getConfig();
     [HTTPCallable] Unit setConfig(List<Int> cfg);
@@ -74,7 +74,7 @@ class Model([Near] Cell cell) implements Model {
 
     /*
      */
-    Unit startSim() {
+    Float startSim() {
         this.init();
         Int n = lookupUnsafe(config, "Protein");
         while (n > 0) {
@@ -99,15 +99,17 @@ class Model([Near] Cell cell) implements Model {
         procs = appendright(procs, l1);
         Runnable l2 = new ProteinLoggerStdout(cell, 60, lookupUnsafe(config, "tStop"));
         procs = appendright(procs, l2);
+        return float(timeValue(now()));
     }
 
-    Unit stopSim() {
+    Float stopSim() {
         while(! isEmpty(procs)) {
             Runnable r = head(procs);
             Fut<Unit> f = r!stop();
             procs = tail(procs);
         }
         println("***Simulation stopped");
+        return float(timeValue(now()));
     }
 
     String vizMrna() {

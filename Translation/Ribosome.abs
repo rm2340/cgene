@@ -66,10 +66,12 @@ class Ribosome([Final] Cell cell) implements Ribosome {
 
     Unit stop() {
         run = False;
-        if (attached) {
+        /* Detaching from the mRNA while decoding can lead to NullPointerExceptions
+           if (attached) {
             await mrna!detach(this, position);
             mrna = null;
         }
+        */
     }
 
     /* Scan 5'UTR, look for the start codon
