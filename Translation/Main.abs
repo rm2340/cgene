@@ -30,6 +30,7 @@ interface Model {
 class Model([Near] Cell cell) implements Model {
 
     List<Runnable> procs = list[];
+    Bool initialised = False;
 
     Map<String,Int> config = map[
         Pair("tStart", 240),
@@ -73,8 +74,11 @@ class Model([Near] Cell cell) implements Model {
     }
 
     /*
+     * - Add initial amount of mRNAs to cell
+     * - Let time elapse until requested starting time
+     * - Add initial amount of proteins to cell
      */
-    Float startSim() {
+    Unit initSim() {
         this.init();
         Int n = lookupUnsafe(config, "Protein");
         while (n > 0) {
@@ -83,6 +87,17 @@ class Model([Near] Cell cell) implements Model {
         }
         Int t = lookupUnsafe(config, "tStart");
         await duration(t/1, t/1);
+
+    }
+
+    /*
+     * - Start processes: translation, growth, loggers
+     */
+    Float startSim() {
+        if (! initialised) {
+            initialised = True;
+            this.initSim();
+        }
 
         cell.setLigand(lookupUnsafe(config, "Ligand") == 1);
 
@@ -102,6 +117,9 @@ class Model([Near] Cell cell) implements Model {
         return float(timeValue(now()));
     }
 
+    /*
+     * - Stop processes (note that they currently cannot be restarted; FIXME?)
+     */
     Float stopSim() {
         while(! isEmpty(procs)) {
             Runnable r = head(procs);

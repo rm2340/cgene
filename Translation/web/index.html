@@ -18,7 +18,7 @@
     <div id="chart1"></div>
     <div id="config">
         <table width="100%">
-            <tr><th colspan="2">Simulation Configuration</th></tr>
+            <tr><th colspan="2">Initial Simulation Configuration</th></tr>
              <tr>
                  <td>Start Time:</td>
                  <td><input type="text" size="6" id="cfg.tstart" value=""></td>
@@ -127,26 +127,33 @@
     }
 
     function stopSim() {
-        $.ajax({
-            url: 'call/Model/stopSim',
-            type: 'GET'
-        }).done(startStop);
+        $.when(
+            $.ajax({
+                url: 'call/Model/stopSim',
+                type: 'GET'
+            }),
+            $.ajax({
+                url: 'call/Model/getQProtein',
+                type: 'GET'
+            })
+        ).done(startStop);
     }
-    
-    function startStop(ret) {
+        
+    function startStop(ret1, ret2) {
         var button = document.getElementById("sim.start");
         if (button.value == "Start") {
             button.value = "Stop";
             button.removeEventListener("click", startSim);
             button.addEventListener("click", stopSim);
             document.getElementById("sim.status").innerHTML = "Simulation running";
-            document.getElementById('dump').innerText += JSON.stringify(ret.result) + " Simulation started\n";
+            document.getElementById('dump').innerText += JSON.stringify(ret1.result) + " Simulation started\n";
         } else { 
             button.value = "Start";
             button.removeEventListener("click", stopSim);
             button.addEventListener("click", startSim);
             document.getElementById("sim.status").innerHTML = "Simulation stopped";
-            document.getElementById('dump').innerText += JSON.stringify(ret.result) + " Simulation stopped\n";
+            document.getElementById('dump').innerText += JSON.stringify(ret1[0].result) 
+                + " Simulation stopped; " + JSON.stringify(ret2[0].result) + " Proteins\n";
         }
         //button.disabled = true;
     }
