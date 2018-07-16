@@ -2,8 +2,13 @@ SHELL=/bin/bash -O extglob
 
 main: build run		## Build and start demo model (default)
 
+indep: build1 run
+
 build:
 	@absc -erlang -http-index-file ./web/index.html -http-static-dir ./web/ Main.abs !(@(Main|Test)*).abs
+
+build1:
+	@absc -erlang -product=IndyRibo -http-index-file ./web/index.html -http-static-dir ./web/ Main.abs !(@(Main|Test)*).abs
 
 run:
 	@gen/erl/run -p 8080
