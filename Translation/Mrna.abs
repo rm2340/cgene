@@ -5,9 +5,23 @@ import * from Rna;
 import * from Ribosome;
 import * from Cell;
 
+/* Test whether ribosomes are present between positions first and last.
+ * This would prevent a ribosome to advance.
+ */
+def Bool freeToAdvance<T>(Map<Int, T> map, Int first, Int last) =
+    case first <= last {
+        True => case lookup(map, first) {
+            Nothing => freeToAdvance(map, first+1, last);
+            _ => False;
+        };
+        False => True;
+    };
+
 interface Mrna extends Rna {
     Bool attach(Ribosome rib);
     Unit detach(Ribosome rib, Int pos);
+    Int advance(Ribosome rib, Int pos, Int distance);
+    Nucleotide readNucleotide(Int pos);
     String toString();
 }
 
@@ -17,9 +31,13 @@ class Mrna(Gene gene) implements Mrna {
     List<Nucleotide> code = code(gene);
     Folding folding = Folding(map[]); // initially no folding
 
-    // Keep track of how many ribosomes are currently decoding
-    // This way we can limit the number of concurrently decoding ribosomes
-    Int ribosomes = 0;
+    // This map remembers the positions of ribosomes in the mRNA strand
+    // Only one ribosome can be at a certain position
+    Map<Int, Ribosome> occupancy = map[];
+
+    // Minimal distance (nucleotides) between ribosomes on the mRNA strand
+    [Final] Int ribWidth = 30;
+
 
     // init block (constructor)
     {}
@@ -32,22 +50,40 @@ class Mrna(Gene gene) implements Mrna {
      */
     Bool attach(Ribosome rib) {
         Bool inhib = this.inhibitedBySecondary();
+        Bool can = !inhib;
 
-        if (!inhib) {
-            ribosomes = ribosomes + 1;
-            //print(toString(ribosomes) + "  ");
+        if (can) {
+            await freeToAdvance(occupancy, 0, ribWidth);
+            occupancy = put(occupancy, 0, rib);
+            assert lookup(occupancy, 0) == Just(rib);
 
-            //print("+++Ribosome " + toString(rib) + " attached to mRNA");
-            //String s = this.occupancyToString();
-            //println(" - Occupancy: " + s);
+            /*
+            print(toString(rib) + " attached to mRNA");
+            String s = this.occupancyToString();
+            println(" - Occupancy: " + s);
+            */
         }
-        return !inhib;
+        return can;
     }
 
+    /* Move the Ribosome rib from position pos to pos+distance (<distance> nucleotides further)
+     * Return new position.
+     */
+    Int advance([Final] Ribosome rib, [Final] Int pos, [Final] Int distance) {
+        assert pos < length(code) - 1;
+        //wait until next position is free
+        await freeToAdvance(occupancy, pos+1, pos+distance+ribWidth);
+
+        // clear current pos & move rib to next pos
+        assert lookup(occupancy, pos) == Just(rib);
+        occupancy = put(removeKey(occupancy, pos), pos+distance, rib);
+        return pos+distance;
+    }
 
     /* Determine whether a ribosome can attach
      * based on existence of aptamers and ligand
      * crude formula...
+     * TODO make this configurable through web interface
      */
     Bool inhibitedBySecondary() {
         Bool can = True;
@@ -67,14 +103,30 @@ class Mrna(Gene gene) implements Mrna {
         //return False;
     }
 
-
     Unit detach([Final] Ribosome rib, [Final] Int pos) {
-        ribosomes = ribosomes - 1;
+        // clear pos
+        assert lookup(occupancy, pos) == Just(rib);
+        occupancy = removeKey(occupancy, pos);
         //println("---Ribosome detached from mRNA");
+    }
+
+    Nucleotide readNucleotide([Final] Int pos) {
+        try assert pos < length(code);
+        catch AssertionFailException => println("Attempt to read past end of mRNA (no stop codon?)");
+        return nth(code, pos);
     }
 
     String toString() {
         return id + ": " + toString(code);
+    }
+
+    String occupancyToString() {
+        String res = "";
+
+        List<Int> keys = setToList(keys(occupancy));
+        foreach (k in keys)
+            res = res + toString(k) + " ";
+        return res;
     }
 
 }

@@ -53,8 +53,8 @@ class Ribosome([Final] Cell cell) implements Ribosome {
             if (attached) {
                 mrnaID = await mrna!getID();
                 codeBuffer = await mrna!getCode();
-                this.scan(mrna);
-                this.decode(mrna);
+                this.scan();
+                this.decode();
             } else {
                 Rat t = codonDecodingDuration * 300;
                 //println("Ribosome failed to attach to mRNA; wait " + toString(w));
@@ -66,27 +66,23 @@ class Ribosome([Final] Cell cell) implements Ribosome {
 
     Unit stop() {
         run = False;
-        /* Detaching from the mRNA while decoding can lead to NullPointerExceptions
-           if (attached) {
-            await mrna!detach(this, position);
-            mrna = null;
-        }
-        */
+        // Detaching from the mRNA while decoding can lead to NullPointerExceptions
+        // so we just let the ribosome decode till the end
     }
 
-    /* Scan 5'UTR, look for the start codon
+    /* Scan 5'UTR, look for the start codon (AUG)
      */
-    Unit scan(Mrna mrna) {
+    Unit scan() {
         Bool start = False;
         while (!start) {
             Nucleotide n = this.readNucleotide(position);
-            position = position + 1;
+            this.advance(1);
             if (n == A) {
                 n = this.readNucleotide(position);
-                position = position + 1;
+                this.advance(1);
                 if (n == U) {
                     n= this.readNucleotide(position);
-                    position = position + 1;
+                    this.advance(1);
                     if (n == G) {
                         start = True;
                     }
@@ -95,7 +91,7 @@ class Ribosome([Final] Cell cell) implements Ribosome {
         }
     }
 
-    Unit decode(Mrna mrna) {
+    Unit decode() {
         Int codonsDecoded = 0;
         //println("Ribosome " + toString(this) + " starts decoding mrna at pos " + toString(position));
         List<Aminoacid> aminoacids = list[];
@@ -103,15 +99,15 @@ class Ribosome([Final] Cell cell) implements Ribosome {
         while(run && !stop) {
             // read codon
             //println("position: " + toString(position));
-            List<Nucleotide> codon = this.readCodon(mrna);
+            List<Nucleotide> codon = this.readCodon();
             if (stop(codon)) /* STOP; add protein */ {
                 stop = True;
                 //println("Ribosome stops decoding mrna; at pos " + toString(position));
-                await mrna!detach(this, position);
+                this.detach();
                 //println("Stop decoding mrna");
                 await cell!addProtein(Protein(mrnaID, aminoacids));
                 Rat t = codonsDecoded * codonDecodingDuration;
-                //println("Stop codon reached, docoding took " + toString(truncate(t)) + " time units");
+                //println("Stop codon reached, docoding took " + toString(float(t)) + " time units");
                 await duration(t,t);
             } else /* DECODE */ {
                 //print("Codon: " + toString(codon));
@@ -123,14 +119,15 @@ class Ribosome([Final] Cell cell) implements Ribosome {
                 Bool hasATP = await cell!consumeATP();
                 if (! hasATP) { // cell is out of energy
                     stop = True;
-                    await mrna!detach(this, position);
+                    this.detach();
                 }
                 */
+                this.advance(3);
             }
          }
     }
 
-    List<Nucleotide> readCodon(Mrna mrna) {
+    List<Nucleotide> readCodon() {
         List<Nucleotide> codon = list[];
         // #1
         Nucleotide n = this.readNucleotide(position);
@@ -141,7 +138,6 @@ class Ribosome([Final] Cell cell) implements Ribosome {
         // #3
         n = this.readNucleotide(position+2);
         codon = appendright(codon, n);
-        position = position + 3;
         assert length(codon) == 3;
         return codon;
     }
@@ -149,6 +145,22 @@ class Ribosome([Final] Cell cell) implements Ribosome {
     Nucleotide readNucleotide([Final] Int pos) {
         assert pos < length(codeBuffer);
         return nth(codeBuffer, pos);
+    }
+
+    /* Advance d nucleotides along the mRNA strand
+     */
+    Unit advance([Final] Int d) {
+        position = await mrna!advance(this, position, d);
+    }
+
+    /* Detach from mRNA strand
+     */
+    Unit detach() {
+        await mrna!detach(this, position);
+        attached = False;
+        position = -1;
+        mrna = null;
+        mrnaID = "";
     }
 
 
