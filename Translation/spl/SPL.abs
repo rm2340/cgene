@@ -1,0 +1,11 @@
+productline SimCellPL;
+features IndependentRibosomes;
+delta IndependentRibosomes when IndependentRibosomes;
+
+product IndyRibo(IndependentRibosomes);
+
+root SimCell {
+    group [0..*] {
+        IndependentRibosomes
+    }
+}
