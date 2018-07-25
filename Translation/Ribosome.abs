@@ -23,6 +23,7 @@ class Ribosome([Final] Cell cell) implements Ribosome {
     // 10-50 bases/s <= http://book.bionumbers.org/how-many-mrnas-are-in-a-cell/
     // 12-21 bases/s <= http://bionumbers.hms.harvard.edu/bionumber.aspx?&id=100059
     [Final] Rat codonDecodingDuration = 1/10;
+    [Final] Rat mrnaAttachmentDuration = 10;
 
     //[Final] Pair<Int,Int> speed = Pair(10,10);
     List<Nucleotide> codeBuffer = list[];
@@ -49,6 +50,7 @@ class Ribosome([Final] Cell cell) implements Ribosome {
              */
             mrna = await cell!getMrna();
             attached = await mrna!attach(this);
+            await duration(mrnaAttachmentDuration, mrnaAttachmentDuration); // attachment (or attempt) has a cost...
             position = 0;
             if (attached) {
                 mrnaID = await mrna!getID();
@@ -56,9 +58,7 @@ class Ribosome([Final] Cell cell) implements Ribosome {
                 this.scan();
                 this.decode();
             } else {
-                Rat t = codonDecodingDuration * 300;
                 //println("Ribosome failed to attach to mRNA; wait " + toString(w));
-                await duration(t, t); // failure to attach has a cost...
             }
         }
         //println("***Ribosome retired");
@@ -96,6 +96,7 @@ class Ribosome([Final] Cell cell) implements Ribosome {
         //println("Ribosome " + toString(this) + " starts decoding mrna at pos " + toString(position));
         List<Aminoacid> aminoacids = list[];
         Bool stop = False;
+                //Rat t = mrnaAttachmentDuration + codonsDecoded * codonDecodingDuration;
         while(run && !stop) {
             // read codon
             //println("position: " + toString(position));
@@ -106,9 +107,9 @@ class Ribosome([Final] Cell cell) implements Ribosome {
                 this.detach();
                 //println("Stop decoding mrna");
                 await cell!addProtein(Protein(mrnaID, aminoacids));
-                Rat t = codonsDecoded * codonDecodingDuration;
+                //Rat t = mrnaAttachmentDuration + codonsDecoded * codonDecodingDuration;
+                //await duration(t,t);
                 //println("Stop codon reached, docoding took " + toString(float(t)) + " time units");
-                await duration(t,t);
             } else /* DECODE */ {
                 //print("Codon: " + toString(codon));
                 Aminoacid aa = aminoacid(nth(codon, 0), nth(codon, 1), nth(codon, 2));
@@ -122,6 +123,7 @@ class Ribosome([Final] Cell cell) implements Ribosome {
                     this.detach();
                 }
                 */
+                await duration(codonDecodingDuration, codonDecodingDuration);
                 this.advance(3);
             }
          }

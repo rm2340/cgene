@@ -8,7 +8,7 @@ build:
 	@absc -erlang -http-index-file ./web/index.html -http-static-dir ./web/ Main.abs !(@(Main|Test)*).abs
 
 build1:
-	@absc -erlang -product=IndyRibo -http-index-file ./web/index.html -http-static-dir ./web/ Main.abs !(@(Main|Test)*).abs
+	@absc -erlang -product=IndyRibo -http-index-file ./web/index.html -http-static-dir ./web/ Main.abs !(@(Main|Test)*).abs spl/*.abs
 
 run:
 	@gen/erl/run -p 8080

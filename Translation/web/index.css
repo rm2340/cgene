@@ -62,3 +62,16 @@ tr.trans {
 tr.grow {
     background-color: lightyellow;
 }
+
+.hasTooltip span {
+    display: none;
+    width: 400px;
+    text-align: justify;
+    padding: 6px;
+}
+.hasTooltip:hover span {
+    display: block;
+    position: absolute;
+    background-color: orange;
+    border: 1px solid black;
+}

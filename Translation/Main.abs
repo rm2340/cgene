@@ -20,6 +20,7 @@ interface Model {
     // TODO: get other items for plotting
 
     [HTTPCallable] Float startSim();
+    [HTTPCallable] Float stopSimOnTimeout();
     [HTTPCallable] Float stopSim();
 
     [HTTPCallable] Map<String,Int> getConfig();
@@ -73,6 +74,7 @@ class Model([Near] Cell cell) implements Model {
         return tl.getQRibosome();
     }
 
+
     /*
      * - Add initial amount of mRNAs to cell
      * - Let time elapse until requested starting time
@@ -110,23 +112,32 @@ class Model([Near] Cell cell) implements Model {
             Degradation gr = new CellGrowthDegradation(cell);
             procs = appendright(procs, gr);
         }
-        [HTTPName: "Logger"] Logger l1 = new ProteinLogger(cell, 1, lookupUnsafe(config, "tStop"));
+        [HTTPName: "Logger"] Logger l1 = new ProteinLogger(cell, 1);
         procs = appendright(procs, l1);
-        Runnable l2 = new ProteinLoggerStdout(cell, 60, lookupUnsafe(config, "tStop"));
+        Runnable l2 = new ProteinLoggerStdout(cell, 60);
         procs = appendright(procs, l2);
         return float(timeValue(now()));
+    }
+
+    /*
+     * Auto-terminate the simulation processes after time limit
+     */
+    Float stopSimOnTimeout() {
+        await timeValue(now()) >= lookupUnsafe(config, "tStop");
+        Float t = this.stopSim();
+        return t;
     }
 
     /*
      * - Stop processes (note that they currently cannot be restarted; FIXME?)
      */
     Float stopSim() {
+        println("***Stopping simulation...");
         while(! isEmpty(procs)) {
             Runnable r = head(procs);
             Fut<Unit> f = r!stop();
             procs = tail(procs);
         }
-        println("***Simulation stopped");
         return float(timeValue(now()));
     }
 

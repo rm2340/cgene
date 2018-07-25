@@ -9,7 +9,7 @@ interface Logger extends Runnable {
 
 trait Logging = {
     Unit log() {
-        while(run && timeValue(now()) <= t_stop) {
+        while(run) {
             this.logData(t_inc);
         }
         println("***Logger stopped");
@@ -17,7 +17,7 @@ trait Logging = {
 }
 
 
-class ProteinLogger([Final] Cell cell, Int t_inc, Int t_stop) implements Logger {
+class ProteinLogger([Final] Cell cell, Int t_inc) implements Logger {
 
     Map<Rat,Int> chartData = map[];
     Bool run = True;
@@ -42,7 +42,7 @@ class ProteinLogger([Final] Cell cell, Int t_inc, Int t_stop) implements Logger 
     }
 }
 
-class ProteinLoggerStdout([Final] Cell cell, Int t_inc, Int t_stop) implements Runnable {
+class ProteinLoggerStdout([Final] Cell cell, Int t_inc) implements Runnable {
 
     Bool run = True;
 
