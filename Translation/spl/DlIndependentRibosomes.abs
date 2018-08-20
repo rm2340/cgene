@@ -1,9 +1,9 @@
+/*
 delta IndependentRibosomes;
 
 modifies interface Mrna.Mrna {
     removes Int advance(Ribosome rib, Int pos, Int distance);
 }
-
 
 modifies class Mrna.Mrna {
     removes Int advance(Ribosome rib, Int pos, Int distance);
@@ -24,17 +24,17 @@ modifies class Mrna.Mrna {
 modifies class Ribosome.Ribosome {
 
     modifies Unit advance(Int d) {
-        position = position + d;
+        this.position = this.position + d;
     }
 
     modifies Unit detach() {
-        attached = False;
-        position = -1;
-        mrna = null;
-        mrnaID = "";
+        this.attached = False;
+        this.position = -1;
+        this.mrna = null;
+        this.mrnaID = "";
     }
-
 }
+ */
 
 
 

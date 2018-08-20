@@ -13,27 +13,32 @@ interface Translation extends Runnable {
 /*
  * TODO: parametrize translation to a certain RNA (gene) ?
  */
-class Translation([Final] Cell cell, [Final] Int nribo) implements Translation {
+class Translation(
+        [Final] Cell cell,
+        [Final] Int nribo,
+        [Final] Rat tsearch,
+        [Final] Rat tattach,
+        [Final] Rat tdecode) implements Translation {
 
     Set<Ribosome> ribosomes = set[];
 
     Unit run() {
         await cell!setTranslation(this);
-        this.createRibosomes(nribo);
+        this.createRibosomes();
     }
 
     /* Populate cell with ribosomes
      * Translation of proteins in E. coli is carried out by ~10,000-100,000 ribosomes
      * Ribosomes start translating as soon as they are created
      */
-    Unit createRibosomes([Final] Int n) {
+    Unit createRibosomes() {
         Int i = 0;
-        while (i < n) {
-            Ribosome r = new Ribosome(cell);
+        while (i < nribo) {
+            Ribosome r = new Ribosome(cell, tsearch, tattach, tdecode);
             i = i + 1;
             ribosomes = insertElement(ribosomes, r);
         }
-        assert size(ribosomes) == n;
+        assert size(ribosomes) == nribo;
     }
 
     Unit addRibosome(Ribosome ribo) {

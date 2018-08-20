@@ -14,18 +14,15 @@ interface Ribosome {
 /* Model of a ribosome
  * synthesizing protein from mRNA
  */
-class Ribosome([Final] Cell cell) implements Ribosome {
+class Ribosome(
+        [Final] Cell cell,
+        [Final] Rat mrnaSearchDuration,
+        [Final] Rat ribosomeAttachDuration,
+        // Translation rate bases/minute (constant)
+        // 10-50 bases/s <= http://book.bionumbers.org/how-many-mrnas-are-in-a-cell/
+        // 12-21 bases/s <= http://bionumbers.hms.harvard.edu/bionumber.aspx?&id=100059
+        [Final] Rat codonDecodingDuration) implements Ribosome {
 
-    /*
-     * Constants
-     */
-    // Translation rate bases/minute (constant)
-    // 10-50 bases/s <= http://book.bionumbers.org/how-many-mrnas-are-in-a-cell/
-    // 12-21 bases/s <= http://bionumbers.hms.harvard.edu/bionumber.aspx?&id=100059
-    [Final] Rat codonDecodingDuration = 1/10;
-    [Final] Rat mrnaAttachmentDuration = 10;
-
-    //[Final] Pair<Int,Int> speed = Pair(10,10);
     List<Nucleotide> codeBuffer = list[];
 
     /*
@@ -50,7 +47,7 @@ class Ribosome([Final] Cell cell) implements Ribosome {
              */
             mrna = await cell!getMrna();
             attached = await mrna!attach(this);
-            await duration(mrnaAttachmentDuration, mrnaAttachmentDuration); // attachment (or attempt) has a cost...
+            await duration(ribosomeAttachDuration, ribosomeAttachDuration); // attachment (or attempt) has a cost...
             position = 0;
             if (attached) {
                 mrnaID = await mrna!getID();
@@ -60,6 +57,7 @@ class Ribosome([Final] Cell cell) implements Ribosome {
             } else {
                 //println("Ribosome failed to attach to mRNA; wait " + toString(w));
             }
+            await duration(mrnaSearchDuration, mrnaSearchDuration);
         }
         //println("***Ribosome retired");
     }
@@ -96,7 +94,7 @@ class Ribosome([Final] Cell cell) implements Ribosome {
         //println("Ribosome " + toString(this) + " starts decoding mrna at pos " + toString(position));
         List<Aminoacid> aminoacids = list[];
         Bool stop = False;
-                //Rat t = mrnaAttachmentDuration + codonsDecoded * codonDecodingDuration;
+                //Rat t = ribosomeAttachDuration + codonsDecoded * codonDecodingDuration;
         while(run && !stop) {
             // read codon
             //println("position: " + toString(position));
@@ -107,7 +105,7 @@ class Ribosome([Final] Cell cell) implements Ribosome {
                 this.detach();
                 //println("Stop decoding mrna");
                 await cell!addProtein(Protein(mrnaID, aminoacids));
-                //Rat t = mrnaAttachmentDuration + codonsDecoded * codonDecodingDuration;
+                //Rat t = ribosomeAttachDuration + codonsDecoded * codonDecodingDuration;
                 //await duration(t,t);
                 //println("Stop codon reached, docoding took " + toString(float(t)) + " time units");
             } else /* DECODE */ {

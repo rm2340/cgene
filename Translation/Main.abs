@@ -11,11 +11,32 @@ import * from Translation;
 import * from Degradation;
 import * from Logger;
 
+/* All configuration aspects of the model are kept in one place,
+ * so we can do it via a single method call via HTTP
+ */
+data ModelConfig = ModelConfig(
+    Rat  cfg_t_start,
+    Rat  cfg_t_stop,
+    Bool cfg_translation,
+    Int  cfg_n_protein,
+    Int  cfg_n_ribosome,
+    Rat  cfg_t_riboSearch,
+    Rat  cfg_t_riboAttach,
+    Rat  cfg_t_riboDecodeCodon,
+    Int  cfg_n_mrna,
+    Bool cfg_ligand,
+    Int  cfg_n_aptamer,
+    Int  cfg_n_inhib,
+    Bool cfg_growth,
+    Rat  cfg_t_readProtein
+);
+
 interface Model {
 
     [HTTPCallable] Int getQMrna();
     [HTTPCallable] Int getQRibosome();
     [HTTPCallable] Int getQProtein();
+    [HTTPCallable] Float getCurrentTime();
 
     // TODO: get other items for plotting
 
@@ -23,8 +44,11 @@ interface Model {
     [HTTPCallable] Float stopSimOnTimeout();
     [HTTPCallable] Float stopSim();
 
-    [HTTPCallable] Map<String,Int> getConfig();
-    [HTTPCallable] Unit setConfig(List<Int> cfg);
+    [HTTPCallable] ModelConfig getConfig();
+    [HTTPCallable] Unit setConfigB(List<Bool> cfg);
+    [HTTPCallable] Unit setConfigI(List<Int> cfg);
+    [HTTPCallable] Unit setConfigF(List<Float> cfg);
+
     [HTTPCallable] String vizMrna();
 }
 
@@ -33,36 +57,94 @@ class Model([Near] Cell cell) implements Model {
     List<Runnable> procs = list[];
     Bool initialised = False;
 
-    Map<String,Int> config = map[
-        Pair("tStart", 240),
-        Pair("tStop", 540),
-        Pair("Translation", 1),
-        Pair("Protein", 500),
-        Pair("Ribosome", 500),
-        Pair("mRNA", 10),
-        Pair("nAptamer", 3),
-        Pair("Ligand", 1),
-        Pair("Growth", 1)
-    ];
+    /*
+     * Default configuration
+     */
+    ModelConfig config = ModelConfig(
+        240/1,      // t_start
+        540/1,      // t_stop
+        True,       // translation
+        500,        // n_protein
+        500,        // n_ribosome
+        70/1,       // t_riboSearch
+        10/1,       // t_riboAttach
+        1/10,       // t_riboDecodeCodon
+        10,         // n_mrna
+        True,       // ligand
+        1,          // n_aptamer
+        4,          // n_inhib
+        False,      // growth
+        1/1         // t_readProtein
+    );
 
-    Map<String,Int> getConfig() {
+    ModelConfig getConfig() {
+        println("***cfg " + toString(config));
         return config;
     }
 
-    /* Map as parameter not supported via the HTTP API currently
+    /* TODO
+       Ideally we would have a single setConfig method with a
+       ModelConfig parameter that can be called via HTTP.
+       Until that is implemented, we need this mad workaround...
      */
-    Unit setConfig(List<Int> cfg) {
-        println("*** " + toString(cfg));
-        config = put(config, "tStart", nth(cfg,0));
-        config = put(config, "tStop", nth(cfg,1));
-        config = put(config, "Translation", nth(cfg,2));
-        config = put(config, "Protein", nth(cfg,3));
-        config = put(config, "Ribosome", nth(cfg,4));
-        config = put(config, "mRNA", nth(cfg,5));
-        config = put(config, "nAptamer", nth(cfg,6));
-        config = put(config, "Ligand", nth(cfg,7));
-        config = put(config, "Growth", nth(cfg,8));
+    Unit setConfigB(List<Bool> cfg) {
+        println("***cfg set Bool " + toString(cfg));
+        config = ModelConfig(
+            cfg_t_start(config),
+            cfg_t_stop(config),
+            nth(cfg, 0),
+            cfg_n_protein(config),
+            cfg_n_ribosome(config),
+            cfg_t_riboSearch(config),
+            cfg_t_riboAttach(config),
+            cfg_t_riboDecodeCodon(config),
+            cfg_n_mrna(config),
+            nth(cfg, 1),
+            cfg_n_aptamer(config),
+            cfg_n_inhib(config),
+            nth(cfg, 2),
+            cfg_t_readProtein(config)
+        );
     }
+    Unit setConfigI(List<Int> cfg) {
+        println("***cfg set Int " + toString(cfg));
+        config = ModelConfig(
+            cfg_t_start(config),
+            cfg_t_stop(config),
+            cfg_translation(config),
+            nth(cfg, 0), //cfg_n_protein(config)
+            nth(cfg, 1), //cfg_n_ribosome(config)
+            cfg_t_riboSearch(config),
+            cfg_t_riboAttach(config),
+            cfg_t_riboDecodeCodon(config),
+            nth(cfg, 2), //cfg_n_mRNA(config)
+            cfg_ligand(config),
+            nth(cfg, 3), //cfg_n_aptamer(config)
+            nth(cfg, 4), //cfg_n_inhib(config)
+            cfg_growth(config),
+            cfg_t_readProtein(config)
+        );
+    }
+    Unit setConfigF(List<Float> cfg) {
+        println("***cfg set Float " + toString(cfg));
+        config = ModelConfig(
+            rat(nth(cfg, 0)), //cfg_t_start(config)
+            rat(nth(cfg, 1)), //cfg_t_stop(config)
+            cfg_translation(config),
+            cfg_n_protein(config),
+            cfg_n_ribosome(config),
+            rat(nth(cfg, 2)), //cfg_t_riboSearch(config),
+            rat(nth(cfg, 3)), //cfg_t_riboAttach(config),
+            rat(nth(cfg, 4)), //cfg_t_riboDecodeCodon(config),
+            cfg_n_mrna(config),
+            cfg_ligand(config),
+            cfg_n_aptamer(config),
+            cfg_n_inhib(config),
+            cfg_growth(config),
+            rat(nth(cfg, 5)) //cfg_t_readProtein(config)
+        );
+    }
+
     Int getQMrna() {
         return cell.getSumMrna();
     }
@@ -82,13 +164,13 @@ class Model([Near] Cell cell) implements Model {
      */
     Unit initSim() {
         this.init();
-        Int n = lookupUnsafe(config, "Protein");
+        Int n = cfg_n_protein(config);
         while (n > 0) {
             await cell!addProtein(Protein("Initial", list[]));
             n = n-1;
         }
-        Int t = lookupUnsafe(config, "tStart");
-        await duration(t/1, t/1);
+        Rat t = 60 * cfg_t_start(config);
+        await duration(t, t);
 
     }
 
@@ -101,20 +183,25 @@ class Model([Near] Cell cell) implements Model {
             this.initSim();
         }
 
-        cell.setLigand(lookupUnsafe(config, "Ligand") == 1);
+        cell.setLigand(cfg_ligand(config));
 
         // start processes
-        if (lookupUnsafe(config, "Translation") == 1) {
-            Translation tl = new local Translation(cell, lookupUnsafe(config, "Ribosome"));
+        if (cfg_translation(config)) {
+            Translation tl = new local Translation(
+                cell,
+                cfg_n_ribosome(config),
+                cfg_t_riboSearch(config),
+                cfg_t_riboAttach(config),
+                cfg_t_riboDecodeCodon(config));
             procs = appendright(procs, tl);
         }
-        if (lookupUnsafe(config, "Growth") == 1) {
+        if (cfg_growth(config)) {
             Degradation gr = new CellGrowthDegradation(cell);
             procs = appendright(procs, gr);
         }
-        [HTTPName: "Logger"] Logger l1 = new ProteinLogger(cell, 1);
+        [HTTPName: "Logger"] Logger l1 = new ProteinLogger(cell, 60 * cfg_t_readProtein(config));
         procs = appendright(procs, l1);
-        Runnable l2 = new ProteinLoggerStdout(cell, 60);
+        Runnable l2 = new ProteinLoggerStdout(cell, 60 * 30);
         procs = appendright(procs, l2);
         return float(timeValue(now()));
     }
@@ -123,23 +210,30 @@ class Model([Near] Cell cell) implements Model {
      * Auto-terminate the simulation processes after time limit
      */
     Float stopSimOnTimeout() {
-        await timeValue(now()) >= lookupUnsafe(config, "tStop");
-        Float t = this.stopSim();
-        return t;
+        await timeValue(now()) >= 60 * cfg_t_stop(config);
+        //Float t = this.stopSim();
+        return float(timeValue(now()));
     }
 
     /*
-     * - Stop processes (note that they currently cannot be restarted; FIXME?)
+     * Stop processes (note that they currently cannot be restarted; FIXME?)
+     * We don't call this anymore - instead we let the web app terminate the model (/quit)
      */
     Float stopSim() {
         println("***Stopping simulation...");
         while(! isEmpty(procs)) {
             Runnable r = head(procs);
+            println("***Stopping " + toString(r));
             Fut<Unit> f = r!stop();
             procs = tail(procs);
         }
         return float(timeValue(now()));
     }
+
+    Float getCurrentTime() {
+        return float(timeValue(now()));
+    }
+
 
     String vizMrna() {
         Mrna rna = cell.getMrna();
@@ -193,11 +287,12 @@ class Model([Near] Cell cell) implements Model {
 
         // Populate cell with mRNAs
         // For yeast under medium to fast growth rates, the number of mRNA was reported to be in the range of 10,000-60,000 per cell
-        Int i = lookupUnsafe(config, "mRNA");
+        Int i = cfg_n_mrna(config);
         //println("Creating " + toString(i) + " " + id(ura3) + " mRNAs " + toString(length(code(ura3))+length(code(apt))));
         while(i > 0) {
             Mrna mrna = new Mrna(ura3);
-            Int j = lookupUnsafe(config, "nAptamer");
+            await mrna!setInhibitionFactor(cfg_n_inhib(config));
+            Int j = cfg_n_aptamer(config);
             while(j > 0) {
                 await mrna!insert(aptRna, 46); // insert aptamer just before start codon
                 j = j-1;

@@ -22,10 +22,11 @@ interface Mrna extends Rna {
     Unit detach(Ribosome rib, Int pos);
     Int advance(Ribosome rib, Int pos, Int distance);
     Nucleotide readNucleotide(Int pos);
+    Unit setInhibitionFactor(Int f);
     String toString();
 }
 
-class Mrna(Gene gene) implements Mrna {
+class Mrna([Final] Gene gene) implements Mrna {
     String id = id(gene);
     Cell cell; // set it when adding this rna to a cell
     List<Nucleotide> code = code(gene);
@@ -37,7 +38,7 @@ class Mrna(Gene gene) implements Mrna {
 
     // Minimal distance (nucleotides) between ribosomes on the mRNA strand
     [Final] Int ribWidth = 30;
-
+    Int inhibitionFactor = 4; // Used to compute ribosome binding inhibition based on nr of aptamers, see inhibitedBySecondary()
 
     // init block (constructor)
     {}
@@ -80,6 +81,10 @@ class Mrna(Gene gene) implements Mrna {
         return pos+distance;
     }
 
+    Unit setInhibitionFactor(Int f) {
+        inhibitionFactor = f;
+    }
+
     /* Determine whether a ribosome can attach
      * based on existence of aptamers and ligand
      * crude formula...
@@ -87,17 +92,18 @@ class Mrna(Gene gene) implements Mrna {
      */
     Bool inhibitedBySecondary() {
         Bool can = True;
-        Bool lig = await cell!getLigand(); // ligand conncentration
+        Bool lig = await cell!getLigand(); // ligand present?
 
         Int stems = this.secondaryStructureStems();
         //println("Stems " + toString(stems));
 
-        Rat inhib = pow(10/40, stems);
+        // [0..1]
+        Rat inhib = pow(1/inhibitionFactor, stems);
 
-        Int rand = random(100);
-        can = rand < 100 * inhib;
+        Int rand = random(10000);
+        can = rand < 10000 * inhib;
 
-        //println("nr " + toString(nr) + "; rand=" + toString(rand) + " <? " + toString(inhib*100) + " => can=" + toString(can));
+        //println("rand=" + toString(rand) + " < " + toString(float(inhib*10000)) + " => can=" + toString(can));
 
         return lig && !can;
         //return False;
@@ -130,3 +136,5 @@ class Mrna(Gene gene) implements Mrna {
     }
 
 }
+
+

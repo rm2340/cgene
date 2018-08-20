@@ -79,37 +79,38 @@ class CellGrowthDegradationB ([Final] Cell cell) implements Degradation {
     }
 }
 
-/* Alternative implementation that computes the number of proteins to degrade per fixed time interval (1)
- * This should run faster but is potentialliy inaccurate
+/* A sigmoid function fitted to our growth pattern
+ * Note: does not model population decline (cell death phase)
+ */
+def Float sigmoid(Rat t) = 5.440587 + (0.1889115 - 5.440587) / (1.0 + float(pow((t/(2551535/100)), 3)));
+
+/* Alternative implementation that computes the number of proteins to degrade per fixed time interval (120s)
+ * This should run faster but is potentially inaccurate
  * because we can only degrade a *whole* number of proteins
  */
 class CellGrowthDegradation ([Final] Cell cell) implements Degradation {
     Bool run = True;
-    Rat t_inc = 2;
+    Rat t_inc = 120;
     uses RunnableControl;
 
     Unit run() {
         await cell!setGrowth(this);
-        //Cell density - cells per volume - function parameters
-        Rat a = -215503/100000000000000;
-        Rat b =  511020/100000000000;
-        Rat c =  62435/100000000;
-        Rat d =  2/10;
 
         while(run) {
             Int q = await cell!getSumProtein();
             Rat t = timeValue(now());
 
             // cell density now
-            Rat den = a*pow(t,3) + b*pow(t,2) + c*t + d;
+            Float den = sigmoid(t);
             // cell density at t+1
-            Rat den1 = a*pow(t+t_inc,3) + b*pow(t+t_inc,2) + c*(t+t_inc) + d;
+            Float den1 = sigmoid(t + t_inc);
             //println("now: den=" + toString(den) + "  -->  t+1: den=" + toString(den1));
 
             // calculate the number of proteins at t+1
-            Rat q1r = (q/den1) * den + 1/2;
-            Int q1 = truncate(q1r);
-            //println("now: q=" + toString(q) + "  -->  t+1: q=" + toString(q1));
+            Float q1r = (float(q)/den1) * den + 0.5;
+            // TODO: Remember amount after dot, add to next iteration?
+            Int q1 = truncate(rat(q1r));
+            //println("now: q=" + toString(q) + "  -->  t+1: q=" + toString(q1r));
             try assert q1 <= q; // Density is growing, at least in the interval we are interested in
             catch AssertionFailException => println("WARN Cell growth curve is not realistic at the current time");
 

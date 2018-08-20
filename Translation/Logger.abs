@@ -14,10 +14,13 @@ trait Logging = {
         }
         println("***Logger stopped");
     }
+    Unit run() {
+        this.log();
+    }
 }
 
 
-class ProteinLogger([Final] Cell cell, Int t_inc) implements Logger {
+class ProteinLogger([Final] Cell cell, Rat t_inc) implements Logger {
 
     Map<Rat,Int> chartData = map[];
     Bool run = True;
@@ -25,13 +28,9 @@ class ProteinLogger([Final] Cell cell, Int t_inc) implements Logger {
     uses RunnableControl;
     uses Logging;
 
-    Unit run() {
-        this.log();
-    }
-
-    Unit logData(Int t_inc) {
+    Unit logData(Rat t_inc) {
         Int n = await cell!getSumProtein();
-        chartData = put(chartData, timeValue(now()), n);
+        chartData = put(chartData, timeValue(now()) / 60, n);
         await duration(t_inc, t_inc);
     }
 
@@ -49,13 +48,9 @@ class ProteinLoggerStdout([Final] Cell cell, Int t_inc) implements Runnable {
     uses RunnableControl;
     uses Logging;
 
-    Unit run() {
-        this.log();
-    }
-
-    Unit logData(Int t_inc) {
+    Unit logData(Rat t_inc) {
         Int n = await cell!getSumProtein();
-        println(toString(timeValue(now())) + " " + toString(n));
+        println(toString(timeValue(now()) / 60) + " " + toString(n));
         await duration(t_inc, t_inc);
 
     }

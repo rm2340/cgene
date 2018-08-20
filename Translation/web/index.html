@@ -14,72 +14,84 @@
 </head>
 
 <body>
-
-    <div id="chart1"></div>
-    <div id="sim cfg">
+    <div id="config">
         <table width="100%">
-            <tr><th colspan="2">Initial Simulation Configuration</th></tr>
-             <tr>
-                 <td>Start Time:</td>
-                 <td><input type="text" size="6" id="cfg.tstart" value=""></td>
+            <tr>
+            <th>Simulation Configuration</th>
+            <th><input type="button" id="cfg.set" value="Update"></th>
             </tr>
             <tr>
-                 <td>Stop Time:</td>
-                 <td><input type="text" size="6" id="cfg.tstop" value=""></td>
+                 <td>Start Time [m]</td>
+                 <td><input type="text" size="6" id="cfg_t_start" value=""></td>
+            </tr>
+            <tr>
+                 <td>Stop Time [m]</td>
+                 <td><input type="text" size="6" id="cfg_t_stop" value=""></td>
+            </tr>
+            <tr>
+                <td>Initial proteins</td>
+                <td><input type="text" size="6" id="cfg_n_protein" value=""></td>
             </tr>
             <tr class="trans">
                 <td>Translation</td>
-                <td><input id="cfg.translation" type="checkbox" checked></td>
+                <td><input id="cfg_translation" type="checkbox" checked></td>
             </tr>
-            <tr>
-                <td>initial Proteins:</td>
-                <td><input type="text" size="6" id="cfg.protein" value=""></td>
+            <tr class="trans">
+                <td>Ribosomes</td>
+                <td><input type="text" size="6" id="cfg_n_ribosome" value=""></td>
             </tr>
-            <tr>
-                <td>Ribosomes:</td>
-                <td><input type="text" size="6" id="cfg.ribosome" value=""></td>
-            </tr>
-            <tr>
-                <td>mRNAs:</td>
-                <td><input type="text" size="6" id="cfg.mrna" value=""></td>
-            <tr>
-                <td>Aptamers:</td>
-                <td><input type="text" size="6" id="cfg.naptamer" value=""></td>
-            </tr>
-            <tr>
+            <tr class="trans">
+                <td>mRNAs</td>
+                <td><input type="text" size="6" id="cfg_n_mrna" value=""></td>
+            <tr class="trans">
                 <td>Ligand</td>
-                <td><input id="cfg.ligand" type="checkbox" checked></td>
+                <td><input type="checkbox" id="cfg_ligand" checked></td>
+            </tr>
+            <tr class="trans">
+                <td>Aptamers</td>
+                <td><input type="text" size="6" id="cfg_n_aptamer" value=""></td>
+            </tr>
+            <tr class="trans">
+                <td>Sec. structure inhibition</td>
+                <td class="hasTooltip">1&minus;(1 &frasl; <input type="text" size="1" id="cfg_n_inhib" value="">)<sup><data id="cfg_n_aptamer_insert">..</data></sup> = <data id="inhib">..</data>
+                <span class="tooltipText">Rate at which the secondary structure (aptamers) 
+                inhibits binding a ribosome to an mRNA molecule (0=0% ... 1=100%)</span></td>
             </tr>
             <tr class="grow">
                 <td>Cell growth</td>
-                <td><input id="cfg.growth" type="checkbox" checked></td>
+                <td><input id="cfg_growth" type="checkbox" checked></td>
+            </tr>
+            <tr><th colspan="2">Durations [s]</th></tr>
+            <tr>
+                <td>Ribosome searches mRNA to bind</td>
+                <td class="hasTooltip"><input type="text" size="6" id="cfg_t_riboSearch" value="">
+                <span class="tooltipText">Time taken by a ribosome to find an mRNA strand in the cell environment.
+                The longer this takes, the more the secondary structure will inhibit translation.
+                </span></td>
             </tr>
             <tr>
-                <th colspan="2"><input type="button" id="cfg.set" value="Set"></th>
-            </tr>
-        </table>
-    </div>
-
-    <div id="internal cfg">
-        <table width="100%">
-            <tr><th colspan="2">Durations [seconds]</th></tr>
-            <tr class="hasTooltip">
-                <td>Ribosome attachment to mRNA
-                <span>Time taken by a ribosome to find and attach to a mRNA strand, 
-                including duration to scan for the start codon. 
-                (Does this depend on other factors, e.g. nr of mRNA aptamers, nr of mRNAs, ...?)
+                <td>Ribosome binds to mRNA</td>
+                <td class="hasTooltip"><input type="text" size="6" id="cfg_t_riboAttach" value="">
+                <span class="tooltipText">Time taken by a ribosome to (try to) bind to an mRNA, 
+                including duration to scan for the start codon. This action may fail if inhibited by secondary structure.
                 </span></td>
-                <td><input type="text" size="6" id="cfgint.tRibosomeAttach" value=""></td>
             </tr>
-            <tr class="hasTooltip">
-                <td>Decoding one codon<span>Time to decode a codon into an amino acid, i.e. 
+            <tr>
+                <td>Decode one codon</td>
+                <td class="hasTooltip"><input type="text" size="6" id="cfg_t_riboDecodeCodon" value="">
+                <span class="tooltipText">Time to decode a codon into an amino acid, i.e. 
                 the inverse of the rate of translation by the ribosome (amino acids per second)</span></td>
-                <td><input type="text" size="6" id="cfgint.tDecodeCodon" value=""></td>
+            </tr>
+            <tr><th colspan="2">Visualization</th></tr>
+            <tr>
+                <td>Chart refresh rate [m]</td>
+                <td><input type="text" size="6" id="cfg_t_readProtein" value=""></td>
             </tr>
         </table>
-
-        
     </div>
+
+    <div id="chart"></div>
+
     <div id="control">
         <table width="100%">
             <tr><th colspan="2">Simulation Control</th></tr>
@@ -87,12 +99,15 @@
                 <td id="sim.status">Simulation stopped</td>
                 <td><input type="button" id="sim.start" value="Start"></td>
             </tr>
+<!--
             <tr>
                 <td></td>
                 <td><input type="button" id="sim.vizmrna" value="Display mRna"></td>
             </tr>
+-->
         </table>
     </div>
+    
     <div id="dump"></div>
     
 
