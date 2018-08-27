@@ -83,6 +83,7 @@ class CellGrowthDegradationB ([Final] Cell cell) implements Degradation {
  * Note: does not model population decline (cell death phase)
  */
 def Float sigmoid(Rat t) = 5.440587 + (0.1889115 - 5.440587) / (1.0 + float(pow((t/(2551535/100)), 3)));
+//def Float sigmoid(Rat t) = 5.421535 + (0.1788144 - 5.421535) / (1.0 + float(pow((t/(28000)), 4)));
 
 /* Alternative implementation that computes the number of proteins to degrade per fixed time interval (120s)
  * This should run faster but is potentially inaccurate
@@ -90,7 +91,7 @@ def Float sigmoid(Rat t) = 5.440587 + (0.1889115 - 5.440587) / (1.0 + float(pow(
  */
 class CellGrowthDegradation ([Final] Cell cell) implements Degradation {
     Bool run = True;
-    Rat t_inc = 120;
+    Rat t_inc = 60;
     uses RunnableControl;
 
     Unit run() {

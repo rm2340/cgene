@@ -26,7 +26,7 @@ data ModelConfig = ModelConfig(
     Int  cfg_n_mrna,
     Bool cfg_ligand,
     Int  cfg_n_aptamer,
-    Int  cfg_n_inhib,
+    Int  cfg_n_inhib, // not used courrently
     Bool cfg_growth,
     Rat  cfg_t_readProtein
 );
@@ -49,7 +49,7 @@ interface Model {
     [HTTPCallable] Unit setConfigI(List<Int> cfg);
     [HTTPCallable] Unit setConfigF(List<Float> cfg);
 
-    [HTTPCallable] String vizMrna();
+    [HTTPCallable] String getMrnaStructure();
 }
 
 class Model([Near] Cell cell) implements Model {
@@ -62,19 +62,19 @@ class Model([Near] Cell cell) implements Model {
      */
     ModelConfig config = ModelConfig(
         240/1,      // t_start
-        540/1,      // t_stop
+        600/1,      // t_stop
         True,       // translation
         500,        // n_protein
         500,        // n_ribosome
-        70/1,       // t_riboSearch
+        1400/1,     // t_riboSearch
         10/1,       // t_riboAttach
         1/10,       // t_riboDecodeCodon
         10,         // n_mrna
         True,       // ligand
         1,          // n_aptamer
-        4,          // n_inhib
-        False,      // growth
-        1/1         // t_readProtein
+        6,          // n_inhib
+        True,       // growth
+        10/1        // t_readProtein
     );
 
     ModelConfig getConfig() {
@@ -235,7 +235,7 @@ class Model([Near] Cell cell) implements Model {
     }
 
 
-    String vizMrna() {
+    String getMrnaStructure() {
         Mrna rna = cell.getMrna();
         String s = await rna!toDotBracket();
         println("***vizMrna " + s);
@@ -291,12 +291,12 @@ class Model([Near] Cell cell) implements Model {
         //println("Creating " + toString(i) + " " + id(ura3) + " mRNAs " + toString(length(code(ura3))+length(code(apt))));
         while(i > 0) {
             Mrna mrna = new Mrna(ura3);
-            await mrna!setInhibitionFactor(cfg_n_inhib(config));
             Int j = cfg_n_aptamer(config);
             while(j > 0) {
                 await mrna!insert(aptRna, 46); // insert aptamer just before start codon
                 j = j-1;
             }
+            await mrna!calculateInhibitionFactor();
             cell.addMrna(id(ura3), mrna);
             i = i-1;
         }

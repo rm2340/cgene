@@ -1,6 +1,5 @@
 function getStartConfig() {
-    $.get('call/Model/getConfig')
-    .done(function(cfg) {
+    $.get('call/Model/getConfig').done(function(cfg) {
         document.getElementById("cfg_t_start").value = cfg.result.cfg_t_start;
         document.getElementById("cfg_t_stop").value = cfg.result.cfg_t_stop;
         document.getElementById("cfg_translation").checked = cfg.result.cfg_translation;
@@ -12,44 +11,80 @@ function getStartConfig() {
         document.getElementById("cfg_n_mrna").value = cfg.result.cfg_n_mrna;
         document.getElementById("cfg_ligand").checked = cfg.result.cfg_ligand;
         document.getElementById("cfg_n_aptamer").value = cfg.result.cfg_n_aptamer;
-        document.getElementById("cfg_n_aptamer_insert").innerHTML = cfg.result.cfg_n_aptamer;
-        document.getElementById("cfg_n_inhib").value = cfg.result.cfg_n_inhib;
+        //document.getElementById("cfg_n_aptamer_insert").innerHTML = cfg.result.cfg_n_aptamer;
+        //document.getElementById("cfg_n_inhib").value = cfg.result.cfg_n_inhib;
         document.getElementById("cfg_growth").checked = cfg.result.cfg_growth;
         document.getElementById("cfg_t_readProtein").value = cfg.result.cfg_t_readProtein;
-        displayInhibitionFormula();
+        //displayInhibitionFormula();
     });
 }
+/*
 function displayInhibitionFormula() {
     var apt = document.getElementById("cfg_n_aptamer").value;
     var fac = document.getElementById("cfg_n_inhib").value;
     document.getElementById("cfg_n_aptamer_insert").innerHTML = apt;
-    document.getElementById("inhib").innerHTML = (1 - Math.pow((1/fac), apt)).toFixed(2);
+    document.getElementById("inhib").innerHTML = (1 - Math.pow((1/fac), apt)).toFixed(5);
 }
+*/
 
 // global variables
 var chart;
 var currentSeries;
 
 function buildChart() {
+    Highcharts.setOptions({
+        colors: ['#000000', '#0066FF', '#FF9900', '#990066', '#009900', '#FF0000', '#CC66FF', '#CCFF00']
+    });
     chart = new Highcharts.Chart('chart', {
         chart: {
             type: 'line',
-            events: { load: getData }
+            events: { load: getData },
+            plotBorderColor: 'black',
+            plotBorderWidth: 1
         }, title: {
-            text: 'Translation simulation (single cell)'
+            text: 'Translation simulation (single cell)',
+            style: {
+                fontSize: 10,
+                fontWeight: 'bold'
+            },
+            y: 20,
         }, legend: {
             layout: 'vertical',
             align: 'right',
             verticalAlign: 'top',
+            margin: 0,
+            x: 0,
+            y: 100,
+            itemStyle: {
+                fontSize: "8px"
+            }
         }, yAxis: {
+            labels: {
+                x: -4,
+                style: {
+                    fontSize: "6px"
+                }
+            },
             title: {
                 text: 'Proteins'
-            }
+            },
+            tickInterval: 200
         }, xAxis: {
+            labels: {
+                style: {
+                    fontSize: "6px"
+                }
+            },
             title: {
-                text: 'time [min]'
-            }
-        }
+                text: 'time [min]',
+                style: {
+                    fontSize: "6px"
+                }
+            },
+            tickInterval: 60
+        }, credits: {
+            enabled: false
+        },
     });
 }
 
@@ -95,7 +130,7 @@ function stopSim() {
             type: 'GET'
         })
     ).done(function(p, t) {
-        getData(); // one last time before we quit
+        getData().done(addToChart); // one last time before we quit
         stopSimDone(t[0], p[0]);
         $.ajax({
             url: 'quit',
@@ -113,7 +148,12 @@ function getQProtein() {
 
 function startSimDone(time) {
     var apt = document.getElementById("cfg_n_aptamer").value;
-    chart.addSeries({ name: apt + " Apt.", data: [], marker: {enabled: false} });
+    var legend = document.getElementById("custom_legend").value;
+    chart.addSeries({
+        name: legend === "" ? apt + " Apt." : legend,
+        data: [],
+        marker: { enabled: false }
+    });
     var n = chart.series.length;
     currentSeries = n-1;
     
@@ -135,16 +175,6 @@ function startSimDone(time) {
     //button.disabled = true;
 }
 
-function makeFloat(v) {
-/*
-    if (v.search("[.]") == -1) {
-        v = v + ".0";
-    }
-    return v.toString();
-*/
-    return v;
-}
-
 function log(msg) {
     document.getElementById('dump').innerText += msg + "\n";
 }
@@ -164,7 +194,7 @@ $(document).ready(function() {
 
     document.getElementById('cfg.set').addEventListener("click", function() {
         //this.disabled = true;
-        displayInhibitionFormula();
+        //displayInhibitionFormula();
         
         var cfg = [ /* ...FIXME... waiting for Rudi... */ ];
         /*
@@ -190,16 +220,15 @@ $(document).ready(function() {
             document.getElementById("cfg_n_ribosome").value,
             document.getElementById("cfg_n_mrna").value,
             document.getElementById("cfg_n_aptamer").value,
-            document.getElementById("cfg_n_inhib").value,
+            999 //document.getElementById("cfg_n_inhib").value,
         ];
-        /* Need Rudi to FIX THIS */
         var cfgF = [
-            makeFloat(document.getElementById("cfg_t_start").value),
-            makeFloat(document.getElementById("cfg_t_stop").value),
-            makeFloat(document.getElementById("cfg_t_riboSearch").value),
-            makeFloat(document.getElementById("cfg_t_riboAttach").value),
-            makeFloat(document.getElementById("cfg_t_riboDecodeCodon").value),
-            makeFloat(document.getElementById("cfg_t_readProtein").value),
+            document.getElementById("cfg_t_start").value,
+            document.getElementById("cfg_t_stop").value,
+            document.getElementById("cfg_t_riboSearch").value,
+            document.getElementById("cfg_t_riboAttach").value,
+            document.getElementById("cfg_t_riboDecodeCodon").value,
+            document.getElementById("cfg_t_readProtein").value,
         ];
         $.when(
             $.post("call/Model/setConfigB", JSON.stringify({ "cfg": cfgB })),
@@ -217,14 +246,13 @@ $(document).ready(function() {
         });
     });
 
-/*
-    document.getElementById('sim.vizmrna').addEventListener("click", function() {
+    document.getElementById('viz.mrna').addEventListener("click", function() {
         $.ajax({
-            url: 'call/Model/vizMrna',
+            url: 'call/Model/getMrnaStructure',
             type: 'GET'
         }).done(function(data) {
             log(JSON.stringify(data.result));
         });
     });
-*/
+
 });

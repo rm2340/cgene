@@ -15,8 +15,9 @@ interface Rna {
     Unit setCell(Cell cell);
     List<Nucleotide> getCode();
     Folding getFolding();
-    Int secondaryStructureStrength();
-    Int secondaryStructureStrengthAtPos(Int pos1);
+    [Atomic] Int secondaryStructureStrength();
+    [Atomic] Int secondaryStructureStrengthAtPos(Int pos1);
+    Unit calculateInhibitionFactor();
     String toDotBracket();
 }
 
@@ -25,7 +26,7 @@ class Rna(Gene gene) implements Rna {
     Cell cell; // set it when adding this rna to a cell
     List<Nucleotide> code = code(gene);
     Folding folding = Folding(map[]); // initially no folding
-
+    Int inhibitionFactor = 0;
     uses RnaGetters;
     uses RnaSecondaryStructure;
 }
@@ -122,9 +123,40 @@ trait RnaSecondaryStructure = {
         this.checkFolding();
     }
 
+    Unit calculateInhibitionFactor() {
+        Int stems = this.secondaryStructureStems();
+        println("***stems: " + toString(stems));
+        // [0..1]
+        //Rat inhib = pow(1/inhibitionFactor, stems);
+        /*
+        Float inhib = 0.9228718 - 0.9228718 * exp(-2.461678 * float(stems));
+        //println("***inhib: " + toString(inhib));
+        assert inhib >= 0.0;
+        assert inhib <= 1.0;
+        inhibitionFactor = truncate(1000000 * rat(inhib));
+        */
+        if (stems == 0) {
+            inhibitionFactor = 0;
+        } else if (stems == 1) {
+            inhibitionFactor = 850000;
+        } else if (stems == 2) {
+            inhibitionFactor = 930000;
+        } else if (stems == 3) {
+            inhibitionFactor = 940000;
+        } else if (stems == 4) {
+            inhibitionFactor = 950000;
+        } else if (stems == 5) {
+            inhibitionFactor = 960000;
+        } else if (stems == 6) {
+            inhibitionFactor = 970000;
+        } else {
+            inhibitionFactor = 980000;
+        }
+        println("***Inhib.Factor: " + toString(inhibitionFactor));
+    }
+
     /* Calculate an overall value for the secondary structure strength
      * based on total nr of hydrogen bonds
-
     Int secondaryStructureStrength() {
         Int bond = 0;
         Int pos = 0;
@@ -140,7 +172,7 @@ trait RnaSecondaryStructure = {
     /* Calculate an overall value for the secondary structure strength
      * based on total nr of hydrogen bonds in the **stems only**
      */
-    Int secondaryStructureStrength() {
+    [Atomic] Int secondaryStructureStrength() {
         Int strength = 0;
         Int pos1 = 0;
         while (pos1 < length(code)) {
@@ -162,7 +194,7 @@ trait RnaSecondaryStructure = {
     /* Calculate the number of secondary structures (aptamers),
        which is equal to the number of stems
      */
-    Int secondaryStructureStems() {
+    [Atomic] Int secondaryStructureStems() {
         Int stems = 0;
         Int pos1 = 0;
         while (pos1 < length(code)) {
@@ -184,7 +216,7 @@ trait RnaSecondaryStructure = {
     /* Return strength of secondary structure at pos1
      * based on nr of consecutive hydrogen bonds at pos1 and following
      */
-    Int secondaryStructureStrengthAtPos(Int pos) {
+    [Atomic] Int secondaryStructureStrengthAtPos(Int pos) {
         Int bond = 0;
         Int b = -1;
         // FIXME avoid reading past the end of molecule
@@ -202,7 +234,7 @@ trait RnaSecondaryStructure = {
      *   A-U -> 2
      *   G-C -> 3
      */
-    Int hydrogenBondsAt(Int pos1) {
+    [Atomic] Int hydrogenBondsAt(Int pos1) {
         Int bonds = 0;
         Maybe<Int> pos2 = lookup(pairs(folding), pos1);
         if (isJust(pos2)) {
@@ -259,7 +291,7 @@ trait RnaSecondaryStructure = {
             secondary = secondary + char;
             pos = pos + 1;
         }
-        return primary + "\n" + secondary;
+        return ">test\n" + primary + "\n" + secondary;
     }
 
 }

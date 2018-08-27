@@ -30,8 +30,14 @@ div {
 }
 
 input[type=button] {
-    font-size: 16px;
+    font-size: 110%;
     background-color: lightpink;
+}
+input[type=button]:hover {
+    background-color: lightblue;
+}
+.smallbutton {
+    font-size: 100%;
 }
 
 table {
@@ -61,6 +67,9 @@ tr.time {
 }
 tr.trans {
     background-color: lightblue;
+}
+tr.inhib {
+    background-color: deepskyblue;
 }
 tr.grow {
     background-color: lightgreen;

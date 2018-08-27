@@ -1,5 +1,4 @@
 <!DOCTYPE HTML>
-
 <html>
 
 <head>
@@ -10,6 +9,12 @@
     <script type="text/javascript" src="static/jquery-3.2.1.js"></script>
     <script type="text/javascript" src="static/highcharts.js"></script>
     <script type="text/javascript" src="static/highcharts-data.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/offline-exporting.js"></script>    
+<!--
+    <script type="text/javascript" src="static/highcharts-exporting.js"></script>
+    <script type="text/javascript" src="static/highcharts-offline-exporting.js"></script>
+-->
     <script type="text/javascript" src="static/script.js"></script>
 </head>
 
@@ -34,7 +39,7 @@
             </tr>
             <tr class="trans">
                 <td>Translation</td>
-                <td><input id="cfg_translation" type="checkbox" checked></td>
+                <td><input type="checkbox" id="cfg_translation" checked></td>
             </tr>
             <tr class="trans">
                 <td>Ribosomes</td>
@@ -42,21 +47,25 @@
             </tr>
             <tr class="trans">
                 <td>mRNAs</td>
-                <td><input type="text" size="6" id="cfg_n_mrna" value=""></td>
-            <tr class="trans">
+                <td><input type="text" size="6" id="cfg_n_mrna" value="">
+                <input type="button" class="smallbutton" id="viz.mrna" value="Viz"></td>
+            </tr>
+            <tr class="inhib">
                 <td>Ligand</td>
                 <td><input type="checkbox" id="cfg_ligand" checked></td>
             </tr>
-            <tr class="trans">
+            <tr class="inhib">
                 <td>Aptamers</td>
                 <td><input type="text" size="6" id="cfg_n_aptamer" value=""></td>
             </tr>
+<!--
             <tr class="trans">
                 <td>Sec. structure inhibition</td>
                 <td class="hasTooltip">1&minus;(1 &frasl; <input type="text" size="1" id="cfg_n_inhib" value="">)<sup><data id="cfg_n_aptamer_insert">..</data></sup> = <data id="inhib">..</data>
                 <span class="tooltipText">Rate at which the secondary structure (aptamers) 
                 inhibits binding a ribosome to an mRNA molecule (0=0% ... 1=100%)</span></td>
             </tr>
+-->
             <tr class="grow">
                 <td>Cell growth</td>
                 <td><input id="cfg_growth" type="checkbox" checked></td>
@@ -87,6 +96,12 @@
                 <td>Chart refresh rate [m]</td>
                 <td><input type="text" size="6" id="cfg_t_readProtein" value=""></td>
             </tr>
+            <tr>
+                <td>Custom legend</td>
+                <td class="hasTooltip"><input type="text" size="18" id="custom_legend" value="">
+                <span class="tooltipText">Optional text to display in the legend (at the right 
+                of the chart area)</span></td>
+            </tr>
         </table>
     </div>
 
@@ -99,12 +114,6 @@
                 <td id="sim.status">Simulation stopped</td>
                 <td><input type="button" id="sim.start" value="Start"></td>
             </tr>
-<!--
-            <tr>
-                <td></td>
-                <td><input type="button" id="sim.vizmrna" value="Display mRna"></td>
-            </tr>
--->
         </table>
     </div>
     
